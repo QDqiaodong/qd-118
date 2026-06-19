@@ -44,9 +44,18 @@
       <el-table-column prop="name" label="配件名称" min-width="200" show-overflow-tooltip />
       <el-table-column prop="model" label="型号" width="160" show-overflow-tooltip />
       <el-table-column prop="spec" label="规格" width="180" show-overflow-tooltip />
-      <el-table-column label="分类" width="180">
+      <el-table-column label="分类" min-width="280" class-name="category-column">
         <template #default="{ row }">
-          <el-tag type="info" size="small">{{ row.categoryName || '-' }}</el-tag>
+          <div class="category-path" v-if="row.categoryPath && row.categoryPath.length">
+            <template v-for="(seg, idx) in row.categoryPath" :key="idx">
+              <span
+                class="path-seg"
+                :class="idx === row.categoryPath.length - 1 ? categoryLeafTagClass(seg) : 'seg-default'"
+              >{{ seg }}</span>
+              <span v-if="idx < row.categoryPath.length - 1" class="path-sep">/</span>
+            </template>
+          </div>
+          <span v-else class="path-empty">-</span>
         </template>
       </el-table-column>
       <el-table-column prop="unit" label="单位" width="80" align="center" />
@@ -260,6 +269,38 @@ const findNodeById = (list, id) => {
   return null
 }
 
+const findNodePath = (list, id, path = []) => {
+  for (const node of list) {
+    const newPath = [...path, node]
+    if (node.id === id) return newPath
+    if (node.children && node.children.length > 0) {
+      const found = findNodePath(node.children, id, newPath)
+      if (found) return found
+    }
+  }
+  return null
+}
+
+const buildCategoryInfo = (categoryId, fallbackName) => {
+  const pathNodes = findNodePath(categoryTree.value, categoryId)
+  if (pathNodes && pathNodes.length) {
+    const path = pathNodes.map((n) => n.name)
+    return { categoryName: path[path.length - 1], categoryPath: path }
+  }
+  if (fallbackName) {
+    return { categoryName: fallbackName, categoryPath: [fallbackName] }
+  }
+  return { categoryName: '-', categoryPath: [] }
+}
+
+const categoryLeafTagClass = (leafName) => {
+  if (!leafName) return 'seg-leaf-default'
+  if (leafName.includes('接线端子')) return 'seg-terminal'
+  if (leafName.includes('线槽')) return 'seg-duct'
+  if (leafName.includes('固定卡扣')) return 'seg-clip'
+  return 'seg-leaf-default'
+}
+
 const filteredList = computed(() => {
   return dataList.value.filter((item) => {
     let ok = true
@@ -347,9 +388,14 @@ const loadMockCategory = () => {
     ]},
     { id: 2, parentId: 0, name: '连接器件', children: [
       { id: 21, parentId: 2, name: '水晶头', children: [] },
-      { id: 22, parentId: 2, name: '配线架', children: [] }
+      { id: 22, parentId: 2, name: '配线架', children: [] },
+      { id: 24, parentId: 2, name: '接线端子', children: [] }
     ]},
-    { id: 3, parentId: 0, name: '管材管件', children: [] }
+    { id: 3, parentId: 0, name: '管材管件', children: [
+      { id: 31, parentId: 3, name: 'PVC线管', children: [] },
+      { id: 34, parentId: 3, name: '线槽', children: [] },
+      { id: 35, parentId: 3, name: '固定卡扣', children: [] }
+    ]}
   ]
 }
 
@@ -361,7 +407,7 @@ const loadData = async () => {
       const list = data.records || data.list || data || []
       dataList.value = list.map((item) => ({
         ...item,
-        categoryName: findNodeById(categoryTree.value, item.categoryId)?.name || '-'
+        ...buildCategoryInfo(item.categoryId, item.categoryName)
       }))
     }
   } catch (error) {
@@ -377,16 +423,23 @@ const loadData = async () => {
 }
 
 const loadMockData = () => {
-  dataList.value = [
-    { id: 1, categoryId: 112, categoryName: '六类网线', name: '六类非屏蔽网线', model: 'CAT6-305M', spec: '305米/箱', unit: '箱', quantity: 156, zone: 'A', remark: '安普品牌', createTime: '2026-01-15 10:30:00' },
-    { id: 2, categoryId: 21, categoryName: '水晶头', name: 'CAT6 RJ45水晶头', model: 'RJ45-C6', spec: '100个/盒', unit: '盒', quantity: 320, zone: 'B', remark: '镀金触点', createTime: '2026-01-16 14:20:00' },
-    { id: 3, categoryId: 22, categoryName: '配线架', name: '24口六类配线架', model: 'PATCH-24-C6', spec: '1U机架式', unit: '台', quantity: 45, zone: 'A', remark: '', createTime: '2026-02-01 09:00:00' },
-    { id: 4, categoryId: 111, categoryName: '超五类网线', name: '超五类非屏蔽网线', model: 'CAT5E-305M', spec: '305米/箱', unit: '箱', quantity: 88, zone: 'A', remark: '', createTime: '2026-02-05 11:15:00' },
-    { id: 5, categoryId: 12, categoryName: '光纤', name: '单模室内光纤', model: 'SM-9/125-4C', spec: '4芯/100米', unit: '米', quantity: 5000, zone: 'C', remark: '低烟无卤', createTime: '2026-02-10 16:40:00' },
-    { id: 6, categoryId: 3, categoryName: '管材管件', name: 'PVC线管', model: 'PVC-D20', spec: 'φ20mm/3米', unit: '根', quantity: 1200, zone: 'D', remark: '', createTime: '2026-02-12 08:30:00' },
-    { id: 7, categoryId: 21, categoryName: '水晶头', name: '六类屏蔽水晶头', model: 'RJ45-C6-S', spec: '50个/盒', unit: '盒', quantity: 60, zone: 'B', remark: 'FTP屏蔽', createTime: '2026-03-01 10:00:00' },
-    { id: 8, categoryId: 112, categoryName: '六类网线', name: '六类屏蔽网线', model: 'CAT6-S-305M', spec: '35米/箱', unit: '箱', quantity: 32, zone: 'A', remark: 'FTP双层屏蔽', createTime: '2026-03-05 14:00:00' }
+  const rawList = [
+    { id: 1, categoryId: 112, name: '六类非屏蔽网线', model: 'CAT6-305M', spec: '305米/箱', unit: '箱', quantity: 156, zone: 'A', remark: '安普品牌', createTime: '2026-01-15 10:30:00' },
+    { id: 2, categoryId: 21, name: 'CAT6 RJ45水晶头', model: 'RJ45-C6', spec: '100个/盒', unit: '盒', quantity: 320, zone: 'B', remark: '镀金触点', createTime: '2026-01-16 14:20:00' },
+    { id: 3, categoryId: 22, name: '24口六类配线架', model: 'PATCH-24-C6', spec: '1U机架式', unit: '台', quantity: 45, zone: 'A', remark: '', createTime: '2026-02-01 09:00:00' },
+    { id: 4, categoryId: 111, name: '超五类非屏蔽网线', model: 'CAT5E-305M', spec: '305米/箱', unit: '箱', quantity: 88, zone: 'A', remark: '', createTime: '2026-02-05 11:15:00' },
+    { id: 5, categoryId: 12, name: '单模室内光纤', model: 'SM-9/125-4C', spec: '4芯/100米', unit: '米', quantity: 5000, zone: 'C', remark: '低烟无卤', createTime: '2026-02-10 16:40:00' },
+    { id: 6, categoryId: 31, name: 'PVC线管', model: 'PVC-D20', spec: 'φ20mm/3米', unit: '根', quantity: 1200, zone: 'D', remark: '', createTime: '2026-02-12 08:30:00' },
+    { id: 7, categoryId: 21, name: '六类屏蔽水晶头', model: 'RJ45-C6-S', spec: '50个/盒', unit: '盒', quantity: 60, zone: 'B', remark: 'FTP屏蔽', createTime: '2026-03-01 10:00:00' },
+    { id: 8, categoryId: 112, name: '六类屏蔽网线', model: 'CAT6-S-305M', spec: '35米/箱', unit: '箱', quantity: 32, zone: 'A', remark: 'FTP双层屏蔽', createTime: '2026-03-05 14:00:00' },
+    { id: 9, categoryId: 24, name: '插拔式接线端子', model: 'TB-2.5-12', spec: '2.5mm²/12位', unit: '排', quantity: 240, zone: 'B', remark: '可插拔式', createTime: '2026-03-08 09:30:00' },
+    { id: 10, categoryId: 34, name: 'PVC阻燃线槽', model: 'PVC-2525', spec: '25×25mm/2米', unit: '根', quantity: 580, zone: 'C', remark: '明装走线', createTime: '2026-03-10 15:00:00' },
+    { id: 11, categoryId: 35, name: '线缆固定卡扣', model: 'CB-20', spec: 'φ20mm/100个', unit: '包', quantity: 75, zone: 'D', remark: '尼龙材质', createTime: '2026-03-12 11:45:00' }
   ]
+  dataList.value = rawList.map((item) => ({
+    ...item,
+    ...buildCategoryInfo(item.categoryId, item.categoryName)
+  }))
 }
 
 const handleAdd = () => {
@@ -459,11 +512,11 @@ const handleSubmit = async () => {
       loadData()
     } catch (error) {
       console.error('提交失败:', error)
-      const categoryName = findNodeById(categoryTree.value, formData.categoryId)?.name || '-'
+      const categoryInfo = buildCategoryInfo(formData.categoryId)
       if (isEdit.value) {
         const idx = dataList.value.findIndex((i) => i.id === formData.id)
         if (idx >= 0) {
-          dataList.value[idx] = { ...dataList.value[idx], ...formData, categoryName }
+          dataList.value[idx] = { ...dataList.value[idx], ...formData, ...categoryInfo }
         }
       } else {
         const now = new Date()
@@ -471,7 +524,7 @@ const handleSubmit = async () => {
         dataList.value.unshift({
           id: Date.now(),
           ...formData,
-          categoryName,
+          ...categoryInfo,
           createTime: timeStr
         })
       }
