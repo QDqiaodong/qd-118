@@ -262,31 +262,10 @@ const loadData = async () => {
     }
   } catch (error) {
     console.error('加载配件列表失败:', error)
+    ElMessage.error('加载配件列表失败，请稍后重试')
   } finally {
     loading.value = false
   }
-  if (dataList.value.length === 0) {
-    setTimeout(() => {
-      if (dataList.value.length === 0) loadMockData()
-    }, 600)
-  }
-}
-
-const loadMockData = () => {
-  dataList.value = [
-    { id: 1, name: '六类非屏蔽网线', model: 'CAT6-305M', zone: 'A', quantity: 156, unit: '箱', actualQuantity: null },
-    { id: 2, name: 'CAT6 RJ45水晶头', model: 'RJ45-C6', zone: 'B', quantity: 320, unit: '盒', actualQuantity: null },
-    { id: 3, name: '24口六类配线架', model: 'PATCH-24-C6', zone: 'A', quantity: 45, unit: '台', actualQuantity: null },
-    { id: 4, name: '超五类非屏蔽网线', model: 'CAT5E-305M', zone: 'A', quantity: 88, unit: '箱', actualQuantity: null },
-    { id: 5, name: '单模室内光纤', model: 'SM-9/125-4C', zone: 'C', quantity: 5000, unit: '米', actualQuantity: null },
-    { id: 6, name: 'PVC线管', model: 'PVC-D20', zone: 'D', quantity: 1200, unit: '根', actualQuantity: null },
-    { id: 7, name: '六类屏蔽水晶头', model: 'RJ45-C6-S', zone: 'B', quantity: 60, unit: '盒', actualQuantity: null },
-    { id: 8, name: '六类屏蔽网线', model: 'CAT6-S-305M', zone: 'A', quantity: 32, unit: '箱', actualQuantity: null },
-    { id: 9, name: '光纤跳线 LC-LC', model: 'LC-LC-3M-SM', zone: 'C', quantity: 180, unit: '根', actualQuantity: null },
-    { id: 10, name: '镀锌钢管', model: 'STEEL-D25', zone: 'D', quantity: 600, unit: '根', actualQuantity: null },
-    { id: 11, name: '网格桥架', model: 'TRAY-300-50', zone: 'D', quantity: 80, unit: '米', actualQuantity: null },
-    { id: 12, name: '尼龙扎带 4*200', model: 'TIE-4200', zone: 'B', quantity: 5000, unit: '包', actualQuantity: null }
-  ]
 }
 
 const handleFillAll = () => {
@@ -328,25 +307,12 @@ const confirmSubmit = async () => {
       details
     })
     ElMessage.success('清点记录提交成功，库存已更新')
-    dataList.value.forEach((r) => {
-      if (r.actualQuantity !== null && r.actualQuantity !== undefined) {
-        r.quantity = r.actualQuantity
-        r.actualQuantity = null
-      }
-    })
+    loadData()
     submitDialogVisible.value = false
     remarkInput.value = ''
   } catch (error) {
     console.error('提交清点失败:', error)
-    dataList.value.forEach((r) => {
-      if (r.actualQuantity !== null && r.actualQuantity !== undefined) {
-        r.quantity = r.actualQuantity
-        r.actualQuantity = null
-      }
-    })
-    ElMessage.success('清点记录提交成功，库存已更新')
-    submitDialogVisible.value = false
-    remarkInput.value = ''
+    ElMessage.error('提交清点失败，请稍后重试')
   } finally {
     submitting.value = false
   }

@@ -141,47 +141,8 @@ const loadTree = async () => {
     }
   } catch (error) {
     console.error('加载分类树失败:', error)
-    loadMockData()
+    ElMessage.error('加载分类失败，请稍后重试')
   }
-}
-
-const loadMockData = () => {
-  treeData.value = [
-    {
-      id: 1, parentId: 0, name: '线缆类', code: 'CABLE', sortOrder: 1, children: [
-        { id: 11, parentId: 1, name: '网线', code: 'CABLE-NET', sortOrder: 1, children: [
-          { id: 111, parentId: 11, name: '超五类网线', code: 'CABLE-NET-CAT5E', sortOrder: 1, children: [] },
-          { id: 112, parentId: 11, name: '六类网线', code: 'CABLE-NET-CAT6', sortOrder: 2, children: [] },
-          { id: 113, parentId: 11, name: '六类屏蔽网线', code: 'CABLE-NET-CAT6-S', sortOrder: 3, children: [] }
-        ]},
-        { id: 12, parentId: 1, name: '光纤', code: 'CABLE-FIBER', sortOrder: 2, children: [
-          { id: 121, parentId: 12, name: '单模光纤', code: 'CABLE-FIBER-SM', sortOrder: 1, children: [] },
-          { id: 122, parentId: 12, name: '多模光纤', code: 'CABLE-FIBER-MM', sortOrder: 2, children: [] }
-        ]},
-        { id: 13, parentId: 1, name: '电源线', code: 'CABLE-POWER', sortOrder: 3, children: [] }
-      ]
-    },
-    {
-      id: 2, parentId: 0, name: '连接器件', code: 'CONNECTOR', sortOrder: 2, children: [
-        { id: 21, parentId: 2, name: '水晶头', code: 'CONN-RJ45', sortOrder: 1, children: [] },
-        { id: 22, parentId: 2, name: '光纤接头', code: 'CONN-FIBER', sortOrder: 2, children: [] },
-        { id: 23, parentId: 2, name: '配线架', code: 'CONN-PATCH', sortOrder: 3, children: [] }
-      ]
-    },
-    {
-      id: 3, parentId: 0, name: '管材管件', code: 'PIPE', sortOrder: 3, children: [
-        { id: 31, parentId: 3, name: 'PVC线管', code: 'PIPE-PVC', sortOrder: 1, children: [] },
-        { id: 32, parentId: 3, name: '镀锌钢管', code: 'PIPE-STEEL', sortOrder: 2, children: [] },
-        { id: 33, parentId: 3, name: '桥架', code: 'PIPE-TRAY', sortOrder: 3, children: [] }
-      ]
-    },
-    {
-      id: 4, parentId: 0, name: '辅助材料', code: 'AUX', sortOrder: 4, children: [
-        { id: 41, parentId: 4, name: '扎带', code: 'AUX-TIE', sortOrder: 1, children: [] },
-        { id: 42, parentId: 4, name: '标签', code: 'AUX-LABEL', sortOrder: 2, children: [] }
-      ]
-    }
-  ]
 }
 
 const handleAddRoot = () => {
@@ -239,22 +200,7 @@ const handleDelete = async (row) => {
     loadTree()
   } catch (error) {
     console.error('删除失败:', error)
-    const removeNode = (list, id) => {
-      for (let i = 0; i < list.length; i++) {
-        if (list[i].id === id) {
-          list.splice(i, 1)
-          return true
-        }
-        if (list[i].children && list[i].children.length > 0) {
-          if (removeNode(list[i].children, id)) return true
-        }
-      }
-      return false
-    }
-    if (removeNode(treeData.value, row.id)) {
-      treeData.value = [...treeData.value]
-      ElMessage.success('删除成功')
-    }
+    ElMessage.error('删除失败，请稍后重试')
   }
 }
 
@@ -282,43 +228,7 @@ const handleSubmit = async () => {
       loadTree()
     } catch (error) {
       console.error('提交失败:', error)
-      const newNode = {
-        id: Date.now(),
-        parentId: formData.parentId,
-        name: formData.name,
-        code: formData.code,
-        sortOrder: formData.sortOrder,
-        remark: formData.remark,
-        children: []
-      }
-      if (isEdit.value) {
-        const updateNode = (list) => {
-          for (let i = 0; i < list.length; i++) {
-            if (list[i].id === formData.id) {
-              list[i] = { ...list[i], ...payload }
-              return true
-            }
-            if (list[i].children && list[i].children.length > 0) {
-              if (updateNode(list[i].children)) return true
-            }
-          }
-          return false
-        }
-        updateNode(treeData.value)
-      } else {
-        if (formData.parentId === 0) {
-          treeData.value.push(newNode)
-        } else {
-          const result = findNodeById(treeData.value, formData.parentId)
-          if (result) {
-            if (!result.node.children) result.node.children = []
-            result.node.children.push(newNode)
-          }
-        }
-      }
-      treeData.value = [...treeData.value]
-      ElMessage.success(isEdit.value ? '修改成功' : '新增成功')
-      dialogVisible.value = false
+      ElMessage.error(isEdit.value ? '修改失败，请稍后重试' : '新增失败，请稍后重试')
     } finally {
       submitting.value = false
     }
@@ -327,10 +237,5 @@ const handleSubmit = async () => {
 
 onMounted(() => {
   loadTree()
-  if (treeData.value.length === 0) {
-    setTimeout(() => {
-      if (treeData.value.length === 0) loadMockData()
-    }, 800)
-  }
 })
 </script>

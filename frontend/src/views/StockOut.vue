@@ -241,23 +241,8 @@ const loadAccessoryList = async () => {
     }
   } catch (error) {
     console.error('加载配件列表失败:', error)
+    ElMessage.error('加载配件列表失败，请稍后重试')
   }
-  if (accessoryList.value.length === 0) {
-    loadMockAccessory()
-  }
-}
-
-const loadMockAccessory = () => {
-  accessoryList.value = [
-    { id: 1, name: '六类非屏蔽网线', model: 'CAT6-305M', unit: '箱', quantity: 156 },
-    { id: 2, name: 'CAT6 RJ45水晶头', model: 'RJ45-C6', unit: '盒', quantity: 320 },
-    { id: 3, name: '24口六类配线架', model: 'PATCH-24-C6', unit: '台', quantity: 45 },
-    { id: 4, name: '超五类非屏蔽网线', model: 'CAT5E-305M', unit: '箱', quantity: 88 },
-    { id: 5, name: '单模室内光纤', model: 'SM-9/125-4C', unit: '米', quantity: 5000 },
-    { id: 6, name: 'PVC线管', model: 'PVC-D20', unit: '根', quantity: 1200 },
-    { id: 7, name: '六类屏蔽水晶头', model: 'RJ45-C6-S', unit: '盒', quantity: 60 },
-    { id: 8, name: '六类屏蔽网线', model: 'CAT6-S-305M', unit: '箱', quantity: 32 }
-  ]
 }
 
 const loadHistory = async () => {
@@ -270,25 +255,10 @@ const loadHistory = async () => {
     }
   } catch (error) {
     console.error('加载历史记录失败:', error)
+    ElMessage.error('加载领用记录失败，请稍后重试')
   } finally {
     historyLoading.value = false
   }
-  if (historyList.value.length === 0) {
-    setTimeout(() => {
-      if (historyList.value.length === 0) loadMockHistory()
-    }, 600)
-  }
-}
-
-const loadMockHistory = () => {
-  historyList.value = [
-    { id: 101, accessoryId: 1, accessoryName: '六类非屏蔽网线', accessoryModel: 'CAT6-305M', unit: '箱', quantity: 12, workshop: '第一车间', operator: '张工', stockAtTime: 168, createTime: '2026-06-10 09:15:00' },
-    { id: 102, accessoryId: 2, accessoryName: 'CAT6 RJ45水晶头', accessoryModel: 'RJ45-C6', unit: '盒', quantity: 20, workshop: '第二车间', operator: '李工', stockAtTime: 340, createTime: '2026-06-11 10:30:00' },
-    { id: 103, accessoryId: 6, accessoryName: 'PVC线管', accessoryModel: 'PVC-D20', unit: '根', quantity: 200, workshop: '第三车间', operator: '王工', stockAtTime: 1400, createTime: '2026-06-12 14:00:00' },
-    { id: 104, accessoryId: 3, accessoryName: '24口六类配线架', accessoryModel: 'PATCH-24-C6', unit: '台', quantity: 8, workshop: '组装车间', operator: '赵工', stockAtTime: 53, createTime: '2026-06-13 11:20:00' },
-    { id: 105, accessoryId: 5, accessoryName: '单模室内光纤', accessoryModel: 'SM-9/125-4C', unit: '米', quantity: 500, workshop: '调试车间', operator: '陈工', stockAtTime: 5500, createTime: '2026-06-14 15:40:00' },
-    { id: 106, accessoryId: 1, accessoryName: '六类非屏蔽网线', accessoryModel: 'CAT6-305M', unit: '箱', quantity: 6, workshop: '第一车间', operator: '张工', stockAtTime: 156, createTime: '2026-06-15 08:50:00' }
-  ]
 }
 
 const handleOutSubmit = async () => {
@@ -313,44 +283,12 @@ const handleOutSubmit = async () => {
       }
       await createStockOut(payload)
       ElMessage.success('领用出库成功')
-      const acc = accessoryList.value.find((a) => a.id === outForm.accessoryId)
-      if (acc) acc.quantity -= outForm.quantity
-      const now = new Date()
-      const timeStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`
-      historyList.value.unshift({
-        id: Date.now(),
-        accessoryId: outForm.accessoryId,
-        accessoryName: selectedAccessory.value.name,
-        accessoryModel: selectedAccessory.value.model,
-        unit: selectedAccessory.value.unit,
-        quantity: outForm.quantity,
-        workshop: outForm.workshop,
-        operator: outForm.operator,
-        stockAtTime: selectedAccessory.value.quantity + outForm.quantity,
-        createTime: timeStr
-      })
+      loadAccessoryList()
+      loadHistory()
       resetOutForm()
     } catch (error) {
       console.error('领用出库失败:', error)
-      const acc = accessoryList.value.find((a) => a.id === outForm.accessoryId)
-      const stockBefore = acc ? acc.quantity : 0
-      if (acc) acc.quantity -= outForm.quantity
-      const now = new Date()
-      const timeStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`
-      historyList.value.unshift({
-        id: Date.now(),
-        accessoryId: outForm.accessoryId,
-        accessoryName: selectedAccessory.value.name,
-        accessoryModel: selectedAccessory.value.model,
-        unit: selectedAccessory.value.unit,
-        quantity: outForm.quantity,
-        workshop: outForm.workshop,
-        operator: outForm.operator,
-        stockAtTime: stockBefore,
-        createTime: timeStr
-      })
-      ElMessage.success('领用出库成功')
-      resetOutForm()
+      ElMessage.error('领用出库失败，请稍后重试')
     } finally {
       submitting.value = false
     }
@@ -370,15 +308,11 @@ const handleDeleteRecord = async (row) => {
   try {
     await deleteStockOut(row.id)
     ElMessage.success('删除成功')
-    historyList.value = historyList.value.filter((h) => h.id !== row.id)
-    const acc = accessoryList.value.find((a) => a.id === row.accessoryId)
-    if (acc) acc.quantity += row.quantity
+    loadAccessoryList()
+    loadHistory()
   } catch (error) {
     console.error('删除失败:', error)
-    historyList.value = historyList.value.filter((h) => h.id !== row.id)
-    const acc = accessoryList.value.find((a) => a.id === row.accessoryId)
-    if (acc) acc.quantity += row.quantity
-    ElMessage.success('删除成功')
+    ElMessage.error('删除失败，请稍后重试')
   }
 }
 

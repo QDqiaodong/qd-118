@@ -271,23 +271,8 @@ const loadAccessoryList = async () => {
     }
   } catch (error) {
     console.error('加载配件列表失败:', error)
+    ElMessage.error('加载配件列表失败，请稍后重试')
   }
-  if (accessoryList.value.length === 0) {
-    loadMockAccessory()
-  }
-}
-
-const loadMockAccessory = () => {
-  accessoryList.value = [
-    { id: 1, name: '六类非屏蔽网线', model: 'CAT6-305M', unit: '箱', quantity: 156 },
-    { id: 2, name: 'CAT6 RJ45水晶头', model: 'RJ45-C6', unit: '盒', quantity: 320 },
-    { id: 3, name: '24口六类配线架', model: 'PATCH-24-C6', unit: '台', quantity: 45 },
-    { id: 4, name: '超五类非屏蔽网线', model: 'CAT5E-305M', unit: '箱', quantity: 88 },
-    { id: 5, name: '单模室内光纤', model: 'SM-9/125-4C', unit: '米', quantity: 5000 },
-    { id: 6, name: 'PVC线管', model: 'PVC-D20', unit: '根', quantity: 1200 },
-    { id: 7, name: '六类屏蔽水晶头', model: 'RJ45-C6-S', unit: '盒', quantity: 60 },
-    { id: 8, name: '六类屏蔽网线', model: 'CAT6-S-305M', unit: '箱', quantity: 32 }
-  ]
 }
 
 const loadHistory = async () => {
@@ -300,24 +285,10 @@ const loadHistory = async () => {
     }
   } catch (error) {
     console.error('加载历史记录失败:', error)
+    ElMessage.error('加载报废记录失败，请稍后重试')
   } finally {
     historyLoading.value = false
   }
-  if (historyList.value.length === 0) {
-    setTimeout(() => {
-      if (historyList.value.length === 0) loadMockHistory()
-    }, 600)
-  }
-}
-
-const loadMockHistory = () => {
-  historyList.value = [
-    { id: 201, accessoryId: 1, accessoryName: '六类非屏蔽网线', accessoryModel: 'CAT6-305M', unit: '箱', quantity: 5, reason: '自然老化', operator: '仓库管理员', stockAtTime: 175, remark: '存放超过5年，外皮出现龟裂迹象', createTime: '2026-04-10 10:15:00' },
-    { id: 202, accessoryId: 7, accessoryName: '六类屏蔽水晶头', accessoryModel: 'RJ45-C6-S', unit: '盒', quantity: 8, reason: '质量问题', operator: '质检部', stockAtTime: 72, remark: '镀金层氧化，接触不良', createTime: '2026-04-18 14:30:00' },
-    { id: 203, accessoryId: 4, accessoryName: '超五类非屏蔽网线', accessoryModel: 'CAT5E-305M', unit: '箱', quantity: 12, reason: '技术淘汰', operator: '技术部', stockAtTime: 100, remark: '项目已不再使用超五类方案，全部升级六类', createTime: '2026-05-05 09:00:00' },
-    { id: 204, accessoryId: 6, accessoryName: 'PVC线管', accessoryModel: 'PVC-D20', unit: '根', quantity: 50, reason: '物理损坏', operator: '仓库管理员', stockAtTime: 1300, remark: '搬运过程中挤压变形', createTime: '2026-05-12 16:20:00' },
-    { id: 205, accessoryId: 2, accessoryName: 'CAT6 RJ45水晶头', accessoryModel: 'RJ45-C6', unit: '盒', quantity: 15, reason: '过期失效', operator: '质检部', stockAtTime: 355, remark: '超过质保期3年', createTime: '2026-05-25 11:40:00' }
-  ]
 }
 
 const handleScrapSubmit = async () => {
@@ -357,47 +328,12 @@ const handleScrapSubmit = async () => {
       }
       await createScrap(payload)
       ElMessage.success('报废归档成功')
-      const acc = accessoryList.value.find((a) => a.id === scrapForm.accessoryId)
-      const stockBefore = acc ? acc.quantity : 0
-      if (acc) acc.quantity -= scrapForm.quantity
-      const now = new Date()
-      const timeStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`
-      historyList.value.unshift({
-        id: Date.now(),
-        accessoryId: scrapForm.accessoryId,
-        accessoryName: selectedAccessory.value.name,
-        accessoryModel: selectedAccessory.value.model,
-        unit: selectedAccessory.value.unit,
-        quantity: scrapForm.quantity,
-        reason: scrapForm.reason,
-        operator: scrapForm.operator,
-        remark: scrapForm.remark,
-        stockAtTime: stockBefore,
-        createTime: timeStr
-      })
+      loadAccessoryList()
+      loadHistory()
       resetScrapForm()
     } catch (error) {
       console.error('报废失败:', error)
-      const acc = accessoryList.value.find((a) => a.id === scrapForm.accessoryId)
-      const stockBefore = acc ? acc.quantity : 0
-      if (acc) acc.quantity -= scrapForm.quantity
-      const now = new Date()
-      const timeStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`
-      historyList.value.unshift({
-        id: Date.now(),
-        accessoryId: scrapForm.accessoryId,
-        accessoryName: selectedAccessory.value.name,
-        accessoryModel: selectedAccessory.value.model,
-        unit: selectedAccessory.value.unit,
-        quantity: scrapForm.quantity,
-        reason: scrapForm.reason,
-        operator: scrapForm.operator,
-        remark: scrapForm.remark,
-        stockAtTime: stockBefore,
-        createTime: timeStr
-      })
-      ElMessage.success('报废归档成功')
-      resetScrapForm()
+      ElMessage.error('报废归档失败，请稍后重试')
     } finally {
       submitting.value = false
     }
@@ -417,15 +353,11 @@ const handleDeleteRecord = async (row) => {
   try {
     await deleteScrap(row.id)
     ElMessage.success('删除成功')
-    historyList.value = historyList.value.filter((h) => h.id !== row.id)
-    const acc = accessoryList.value.find((a) => a.id === row.accessoryId)
-    if (acc) acc.quantity += row.quantity
+    loadAccessoryList()
+    loadHistory()
   } catch (error) {
     console.error('删除失败:', error)
-    historyList.value = historyList.value.filter((h) => h.id !== row.id)
-    const acc = accessoryList.value.find((a) => a.id === row.accessoryId)
-    if (acc) acc.quantity += row.quantity
-    ElMessage.success('删除成功')
+    ElMessage.error('删除失败，请稍后重试')
   }
 }
 

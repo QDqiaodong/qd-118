@@ -191,18 +191,21 @@ const onNodeDrop = async () => {
     ElMessage.success('同级排序已保存')
   } catch (error) {
     console.error('保存排序失败:', error)
-    ElMessage.success('同级排序已调整')
+    ElMessage.error('保存排序失败，请稍后重试')
+    loadTree()
   }
 }
 
 const handleStatusChange = async (data, val) => {
+  const oldVal = !val
   data.enabled = val
   try {
     await updateCategoryStatus(data.id, val)
     ElMessage.success(val ? '已启用' : '已停用')
   } catch (error) {
     console.error('启停失败:', error)
-    ElMessage.success(val ? '已启用' : '已停用')
+    data.enabled = oldVal
+    ElMessage.error(val ? '启用失败，请稍后重试' : '停用失败，请稍后重试')
   }
 }
 
@@ -228,7 +231,7 @@ const handlePreview = async (data) => {
     previewList.value = Array.isArray(res) ? res : []
   } catch (error) {
     console.error('加载档案失败:', error)
-    previewList.value = mockAccessoriesFor(data.id)
+    ElMessage.error('加载配件档案失败，请稍后重试')
   } finally {
     previewLoading.value = false
   }
@@ -258,12 +261,10 @@ const loadTree = async () => {
     const data = await getCategoryTreeData()
     if (data && Array.isArray(data) && data.length) {
       treeData.value = data
-    } else {
-      loadMockTree()
     }
   } catch (error) {
     console.error('加载分类树失败:', error)
-    loadMockTree()
+    ElMessage.error('加载分类树失败，请稍后重试')
   } finally {
     loading.value = false
     nextTick(() => expandAll())
