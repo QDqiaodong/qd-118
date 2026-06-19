@@ -5,12 +5,15 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 
 @Repository
 public interface AccessoryRepository extends JpaRepository<Accessory, Long> {
 
     List<Accessory> findByCategoryId(Long categoryId);
+
+    List<Accessory> findByCategoryIdIn(Collection<Long> categoryIds);
 
     List<Accessory> findByNameContaining(String name);
 

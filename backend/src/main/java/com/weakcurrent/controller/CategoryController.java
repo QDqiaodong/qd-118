@@ -2,7 +2,9 @@ package com.weakcurrent.controller;
 
 import com.weakcurrent.common.Result;
 import com.weakcurrent.dto.CategoryCreateDTO;
+import com.weakcurrent.dto.CategorySortItem;
 import com.weakcurrent.dto.CategoryUpdateDTO;
+import com.weakcurrent.entity.Accessory;
 import com.weakcurrent.entity.AccessoryCategory;
 import com.weakcurrent.service.CategoryService;
 import jakarta.validation.Valid;
@@ -47,5 +49,21 @@ public class CategoryController {
     @GetMapping("/tree")
     public Result<List<AccessoryCategory>> getTree() {
         return Result.success(categoryService.getTree());
+    }
+
+    @PutMapping("/sort")
+    public Result<Void> updateSort(@Valid @RequestBody List<CategorySortItem> items) {
+        categoryService.updateSort(items);
+        return Result.success();
+    }
+
+    @PatchMapping("/{id}/status")
+    public Result<AccessoryCategory> updateStatus(@PathVariable Long id, @RequestParam Boolean enabled) {
+        return Result.success(categoryService.updateStatus(id, enabled));
+    }
+
+    @GetMapping("/{id}/accessories")
+    public Result<List<Accessory>> getArchivePreview(@PathVariable Long id) {
+        return Result.success(categoryService.getArchivePreview(id));
     }
 }

@@ -14,6 +14,12 @@ const routes = [
     meta: { title: '配件分类管理' }
   },
   {
+    path: '/category-tree',
+    name: 'CategoryTree',
+    component: () => import('@/views/CategoryTree.vue'),
+    meta: { title: '分类树维护台' }
+  },
+  {
     path: '/accessory',
     name: 'Accessory',
     component: () => import('@/views/Accessory.vue'),

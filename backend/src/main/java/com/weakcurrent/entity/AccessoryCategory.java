@@ -25,6 +25,9 @@ public class AccessoryCategory {
     @Column(name = "sort", nullable = false)
     private Integer sort = 0;
 
+    @Column(name = "enabled", nullable = false)
+    private Boolean enabled = true;
+
     @CreationTimestamp
     @Column(name = "create_time", updatable = false)
     private LocalDateTime createTime;

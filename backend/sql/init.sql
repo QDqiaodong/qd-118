@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS accessory_category (
     name VARCHAR(100) NOT NULL COMMENT '分类名称',
     parent_id BIGINT NOT NULL DEFAULT 0 COMMENT '父级ID，0表示顶级',
     sort INT NOT NULL DEFAULT 0 COMMENT '排序值',
+    enabled TINYINT(1) NOT NULL DEFAULT 1 COMMENT '启用状态：1启用 0停用',
     create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     PRIMARY KEY (id),
     INDEX idx_parent_id (parent_id)

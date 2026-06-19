@@ -17,4 +17,6 @@ public class CategoryUpdateDTO {
     private Long parentId;
 
     private Integer sort;
+
+    private Boolean enabled;
 }

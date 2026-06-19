@@ -14,4 +14,6 @@ public class CategoryCreateDTO {
     private Long parentId;
 
     private Integer sort;
+
+    private Boolean enabled;
 }
