@@ -3,6 +3,9 @@ CREATE DATABASE IF NOT EXISTS weakcurrent_db DEFAULT CHARACTER SET utf8mb4 COLLA
 
 USE weakcurrent_db;
 
+-- Ensure MySQL client decodes this UTF-8 seed file correctly during docker init.
+SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
+
 -- 配件分类表
 CREATE TABLE IF NOT EXISTS accessory_category (
     id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
