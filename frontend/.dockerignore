@@ -19,3 +19,15 @@ pnpm-debug.log*
 .env.*.local
 coverage
 *.log
+logs
+*.tmp
+*.temp
+.cache
+.vite
+tmp
+temp
+screenshots
+*.png
+*.jpg
+*.jpeg
+*.gif

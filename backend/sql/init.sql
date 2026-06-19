@@ -4,8 +4,7 @@ CREATE DATABASE IF NOT EXISTS weakcurrent_db DEFAULT CHARACTER SET utf8mb4 COLLA
 USE weakcurrent_db;
 
 -- 配件分类表
-DROP TABLE IF EXISTS accessory_category;
-CREATE TABLE accessory_category (
+CREATE TABLE IF NOT EXISTS accessory_category (
     id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     name VARCHAR(100) NOT NULL COMMENT '分类名称',
     parent_id BIGINT NOT NULL DEFAULT 0 COMMENT '父级ID，0表示顶级',
@@ -16,8 +15,7 @@ CREATE TABLE accessory_category (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='配件分类表';
 
 -- 配件表
-DROP TABLE IF EXISTS accessory;
-CREATE TABLE accessory (
+CREATE TABLE IF NOT EXISTS accessory (
     id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     name VARCHAR(100) NOT NULL COMMENT '配件名称',
     model VARCHAR(100) COMMENT '型号',
@@ -35,8 +33,7 @@ CREATE TABLE accessory (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='配件表';
 
 -- 领用出库表
-DROP TABLE IF EXISTS stock_out;
-CREATE TABLE stock_out (
+CREATE TABLE IF NOT EXISTS stock_out (
     id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     accessory_id BIGINT NOT NULL COMMENT '配件ID',
     accessory_name VARCHAR(100) COMMENT '配件名称',
@@ -51,8 +48,7 @@ CREATE TABLE stock_out (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='领用出库表';
 
 -- 库房清点表
-DROP TABLE IF EXISTS inventory_check;
-CREATE TABLE inventory_check (
+CREATE TABLE IF NOT EXISTS inventory_check (
     id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     accessory_id BIGINT NOT NULL COMMENT '配件ID',
     accessory_name VARCHAR(100) COMMENT '配件名称',
@@ -68,8 +64,7 @@ CREATE TABLE inventory_check (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='库房清点表';
 
 -- 报废归档表
-DROP TABLE IF EXISTS scrap_record;
-CREATE TABLE scrap_record (
+CREATE TABLE IF NOT EXISTS scrap_record (
     id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     accessory_id BIGINT NOT NULL COMMENT '配件ID',
     accessory_name VARCHAR(100) COMMENT '配件名称',
@@ -84,7 +79,7 @@ CREATE TABLE scrap_record (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='报废归档表';
 
 -- 初始化分类数据
-INSERT INTO accessory_category (id, name, parent_id, sort) VALUES
+INSERT IGNORE INTO accessory_category (id, name, parent_id, sort) VALUES
 (1, '接线端子', 0, 1),
 (2, '线槽', 0, 2),
 (3, '固定卡扣', 0, 3),

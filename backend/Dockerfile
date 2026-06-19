@@ -12,7 +12,7 @@ RUN mvn dependency:go-offline -B
 COPY src ./src
 RUN mvn clean package -DskipTests -B
 
-FROM ${DOCKER_REGISTRY}/library/eclipse-temurin:17-jre
+FROM ${DOCKER_REGISTRY}/library/eclipse-temurin:17-jre-jammy
 
 WORKDIR /app
 

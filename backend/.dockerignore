@@ -21,3 +21,14 @@ out
 *.swp
 *.swo
 *~
+*.tmp
+*.temp
+.cache
+tmp
+temp
+screenshots
+coverage
+*.png
+*.jpg
+*.jpeg
+*.gif
