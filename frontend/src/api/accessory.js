@@ -2,7 +2,7 @@ import request from '@/utils/request'
 
 export function getAccessoryPage(params) {
   return request({
-    url: '/accessory/page',
+    url: '/accessories',
     method: 'get',
     params
   })
@@ -10,7 +10,7 @@ export function getAccessoryPage(params) {
 
 export function getAccessoryList(params) {
   return request({
-    url: '/accessory/list',
+    url: '/accessories',
     method: 'get',
     params
   })
@@ -18,30 +18,49 @@ export function getAccessoryList(params) {
 
 export function getAccessoryById(id) {
   return request({
-    url: `/accessory/${id}`,
+    url: `/accessories/${id}`,
     method: 'get'
   })
 }
 
 export function addAccessory(data) {
   return request({
-    url: '/accessory',
+    url: '/accessories',
     method: 'post',
-    data
+    data: {
+      name: data.name,
+      model: data.model,
+      spec: data.spec,
+      categoryId: data.categoryId,
+      categoryName: data.categoryName,
+      stockQuantity: data.quantity,
+      warehouseZone: data.zone,
+      unit: data.unit
+    }
   })
 }
 
 export function updateAccessory(data) {
   return request({
-    url: '/accessory',
+    url: '/accessories',
     method: 'put',
-    data
+    data: {
+      id: data.id,
+      name: data.name,
+      model: data.model,
+      spec: data.spec,
+      categoryId: data.categoryId,
+      categoryName: data.categoryName,
+      stockQuantity: data.quantity,
+      warehouseZone: data.zone,
+      unit: data.unit
+    }
   })
 }
 
 export function deleteAccessory(id) {
   return request({
-    url: `/accessory/${id}`,
+    url: `/accessories/${id}`,
     method: 'delete'
   })
 }

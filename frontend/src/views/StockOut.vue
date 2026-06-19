@@ -43,9 +43,21 @@
           </el-select>
         </el-form-item>
 
+        <el-form-item label="库区" v-if="selectedAccessory">
+          <el-tag type="primary" effect="plain" size="large">
+            {{ selectedAccessory.zone || '-' }}
+          </el-tag>
+        </el-form-item>
+
         <el-form-item label="当前库存" v-if="selectedAccessory">
           <el-tag type="success" effect="plain" size="large">
             {{ formatNumber(selectedAccessory.quantity) }} {{ selectedAccessory.unit }}
+          </el-tag>
+        </el-form-item>
+
+        <el-form-item label="单位" v-if="selectedAccessory">
+          <el-tag type="info" effect="plain" size="large">
+            {{ selectedAccessory.unit || '-' }}
           </el-tag>
         </el-form-item>
 
@@ -60,14 +72,26 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item label="领用数量" prop="quantity" style="width: 220px">
+        <el-form-item label="领用数量" prop="quantity" style="width: 220px" :error="quantityError">
           <el-input-number
+            ref="quantityInputRef"
             v-model="outForm.quantity"
             :min="1"
             :max="maxQuantity"
             controls-position="right"
             style="width: 100%"
+            :class="{ 'is-error': isQuantityOverStock }"
+            @change="handleQuantityChange"
           />
+        </el-form-item>
+
+        <el-form-item label="出库后余量" v-if="selectedAccessory">
+          <el-tag :type="remainingStock >= 0 ? 'success' : 'danger'" effect="plain" size="large">
+            {{ formatNumber(remainingStock) }} {{ selectedAccessory.unit }}
+          </el-tag>
+          <span v-if="isQuantityOverStock" style="color: #f56c6c; margin-left: 8px; font-size: 12px">
+            库存不足
+          </span>
         </el-form-item>
 
         <el-form-item label="领用人" prop="operator" style="width: 200px">
@@ -75,7 +99,7 @@
         </el-form-item>
 
         <el-form-item>
-          <el-button type="primary" :loading="submitting" @click="handleOutSubmit">
+          <el-button type="primary" :loading="submitting" :disabled="isQuantityOverStock" @click="handleOutSubmit">
             <el-icon><Check /></el-icon>
             <span class="ml-8">确认领用出库</span>
           </el-button>
@@ -149,7 +173,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { ref, reactive, computed, watch, onMounted, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getAccessoryList } from '@/api/accessory'
 import { getStockOutPage, createStockOut, deleteStockOut } from '@/api/stockout'
@@ -157,12 +181,14 @@ import { getStockOutPage, createStockOut, deleteStockOut } from '@/api/stockout'
 const historyLoading = ref(false)
 const submitting = ref(false)
 const outFormRef = ref(null)
+const quantityInputRef = ref(null)
 
 const accessoryList = ref([])
 const historyList = ref([])
 const filterWorkshop = ref('')
 const historyPage = ref(1)
 const historyPageSize = ref(10)
+const quantityError = ref('')
 
 const outForm = reactive({
   accessoryId: null,
@@ -188,6 +214,12 @@ const outFormRules = {
   ]
 }
 
+const mapAccessoryFields = (item) => ({
+  ...item,
+  quantity: item.stockQuantity ?? item.quantity,
+  zone: item.warehouseZone ?? item.zone
+})
+
 const selectedAccessory = computed(() => {
   if (!outForm.accessoryId) return null
   return accessoryList.value.find((a) => a.id === outForm.accessoryId) || null
@@ -196,6 +228,16 @@ const selectedAccessory = computed(() => {
 const maxQuantity = computed(() => {
   if (!selectedAccessory.value) return 99999
   return Math.max(selectedAccessory.value.quantity, 1)
+})
+
+const remainingStock = computed(() => {
+  if (!selectedAccessory.value) return 0
+  return selectedAccessory.value.quantity - outForm.quantity
+})
+
+const isQuantityOverStock = computed(() => {
+  if (!selectedAccessory.value) return false
+  return outForm.quantity > selectedAccessory.value.quantity
 })
 
 const filteredHistory = computed(() => {
@@ -216,12 +258,40 @@ const formatNumber = (num) => {
   return Number(num).toLocaleString('zh-CN')
 }
 
+const focusQuantityInput = async () => {
+  await nextTick()
+  if (quantityInputRef.value) {
+    const input = quantityInputRef.value.$el.querySelector('input')
+    if (input) {
+      input.focus()
+      input.select()
+    }
+  }
+}
+
+const validateQuantity = () => {
+  if (selectedAccessory.value && outForm.quantity > selectedAccessory.value.quantity) {
+    quantityError.value = `领用数量不能超过当前库存(${selectedAccessory.value.quantity})`
+    return false
+  }
+  quantityError.value = ''
+  return true
+}
+
+const handleQuantityChange = () => {
+  validateQuantity()
+}
+
 const handleAccessoryChange = () => {
   if (outForm.quantity > maxQuantity.value) {
     outForm.quantity = maxQuantity.value
   }
   if (outForm.quantity < 1) {
     outForm.quantity = 1
+  }
+  validateQuantity()
+  if (isQuantityOverStock.value) {
+    focusQuantityInput()
   }
 }
 
@@ -230,6 +300,7 @@ const resetOutForm = () => {
   outForm.workshop = ''
   outForm.quantity = 1
   outForm.operator = ''
+  quantityError.value = ''
   outFormRef.value?.resetFields()
 }
 
@@ -237,7 +308,7 @@ const loadAccessoryList = async () => {
   try {
     const data = await getAccessoryList()
     if (data && Array.isArray(data)) {
-      accessoryList.value = data
+      accessoryList.value = data.map(mapAccessoryFields)
     }
   } catch (error) {
     console.error('加载配件列表失败:', error)
@@ -263,14 +334,22 @@ const loadHistory = async () => {
 
 const handleOutSubmit = async () => {
   if (!outFormRef.value) return
+  
+  if (!validateQuantity()) {
+    ElMessage.error(`领用数量不能超过当前库存(${selectedAccessory.value?.quantity || 0})`)
+    focusQuantityInput()
+    return
+  }
+  
   await outFormRef.value.validate(async (valid) => {
     if (!valid) return
     if (!selectedAccessory.value) {
       ElMessage.warning('请先选择配件')
       return
     }
-    if (outForm.quantity > selectedAccessory.value.quantity) {
+    if (isQuantityOverStock.value) {
       ElMessage.error(`领用数量不能超过当前库存(${selectedAccessory.value.quantity})`)
+      focusQuantityInput()
       return
     }
     submitting.value = true

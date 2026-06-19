@@ -263,11 +263,17 @@ const resetScrapForm = () => {
   scrapFormRef.value?.resetFields()
 }
 
+const mapAccessoryFields = (item) => ({
+  ...item,
+  quantity: item.stockQuantity ?? item.quantity,
+  zone: item.warehouseZone ?? item.zone
+})
+
 const loadAccessoryList = async () => {
   try {
     const data = await getAccessoryList()
     if (data && Array.isArray(data)) {
-      accessoryList.value = data
+      accessoryList.value = data.map(mapAccessoryFields)
     }
   } catch (error) {
     console.error('加载配件列表失败:', error)

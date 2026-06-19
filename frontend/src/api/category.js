@@ -2,21 +2,21 @@ import request from '@/utils/request'
 
 export function getCategoryTree() {
   return request({
-    url: '/category/tree',
+    url: '/categories/tree',
     method: 'get'
   })
 }
 
 export function getCategoryList() {
   return request({
-    url: '/category/list',
+    url: '/categories',
     method: 'get'
   })
 }
 
 export function addCategory(data) {
   return request({
-    url: '/category',
+    url: '/categories',
     method: 'post',
     data
   })
@@ -24,7 +24,7 @@ export function addCategory(data) {
 
 export function updateCategory(data) {
   return request({
-    url: '/category',
+    url: '/categories',
     method: 'put',
     data
   })
@@ -32,7 +32,7 @@ export function updateCategory(data) {
 
 export function deleteCategory(id) {
   return request({
-    url: `/category/${id}`,
+    url: `/categories/${id}`,
     method: 'delete'
   })
 }

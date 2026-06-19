@@ -250,13 +250,19 @@ const pagedList = computed(() => {
   return filteredList.value.slice(start, start + pageSize.value)
 })
 
+const mapAccessoryFields = (item) => ({
+  ...item,
+  quantity: item.stockQuantity ?? item.quantity,
+  zone: item.warehouseZone ?? item.zone
+})
+
 const loadData = async () => {
   loading.value = true
   try {
     const data = await getAccessoryList()
     if (data && Array.isArray(data)) {
       dataList.value = data.map((item) => ({
-        ...item,
+        ...mapAccessoryFields(item),
         actualQuantity: null
       }))
     }

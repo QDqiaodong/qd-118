@@ -2,7 +2,7 @@ import request from '@/utils/request'
 
 export function getInventoryPage(params) {
   return request({
-    url: '/inventory/page',
+    url: '/inventory-checks',
     method: 'get',
     params
   })
@@ -10,7 +10,7 @@ export function getInventoryPage(params) {
 
 export function createInventory(data) {
   return request({
-    url: '/inventory',
+    url: '/inventory-checks',
     method: 'post',
     data
   })
@@ -18,7 +18,7 @@ export function createInventory(data) {
 
 export function getInventoryDetail(id) {
   return request({
-    url: `/inventory/${id}`,
+    url: `/inventory-checks/${id}`,
     method: 'get'
   })
 }

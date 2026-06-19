@@ -375,6 +375,12 @@ const loadCategoryTree = async () => {
   }
 }
 
+const mapAccessoryFields = (item) => ({
+  ...item,
+  quantity: item.stockQuantity ?? item.quantity,
+  zone: item.warehouseZone ?? item.zone
+})
+
 const loadData = async () => {
   loading.value = true
   try {
@@ -382,7 +388,7 @@ const loadData = async () => {
     if (data) {
       const list = data.records || data.list || data || []
       dataList.value = list.map((item) => ({
-        ...item,
+        ...mapAccessoryFields(item),
         ...buildCategoryInfo(item.categoryId, item.categoryName)
       }))
     }
@@ -404,15 +410,16 @@ const handleEdit = (row) => {
   resetForm()
   isEdit.value = true
   dialogTitle.value = '编辑配件'
-  formData.id = row.id
-  formData.categoryId = row.categoryId
-  formData.name = row.name
-  formData.model = row.model
-  formData.spec = row.spec
-  formData.unit = row.unit
-  formData.quantity = row.quantity
-  formData.zone = row.zone
-  formData.remark = row.remark || ''
+  const mapped = mapAccessoryFields(row)
+  formData.id = mapped.id
+  formData.categoryId = mapped.categoryId
+  formData.name = mapped.name
+  formData.model = mapped.model
+  formData.spec = mapped.spec
+  formData.unit = mapped.unit
+  formData.quantity = mapped.quantity
+  formData.zone = mapped.zone
+  formData.remark = mapped.remark || ''
   dialogVisible.value = true
 }
 

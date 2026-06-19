@@ -2,7 +2,7 @@ import request from '@/utils/request'
 
 export function getStockOutPage(params) {
   return request({
-    url: '/stockout/page',
+    url: '/stock-outs',
     method: 'get',
     params
   })
@@ -10,7 +10,7 @@ export function getStockOutPage(params) {
 
 export function getStockOutList(params) {
   return request({
-    url: '/stockout/list',
+    url: '/stock-outs',
     method: 'get',
     params
   })
@@ -18,7 +18,7 @@ export function getStockOutList(params) {
 
 export function createStockOut(data) {
   return request({
-    url: '/stockout',
+    url: '/stock-outs',
     method: 'post',
     data
   })
@@ -26,7 +26,7 @@ export function createStockOut(data) {
 
 export function deleteStockOut(id) {
   return request({
-    url: `/stockout/${id}`,
+    url: `/stock-outs/${id}`,
     method: 'delete'
   })
 }
