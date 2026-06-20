@@ -6,8 +6,9 @@
         <span class="ml-8">半年度库房清点</span>
       </div>
       <div style="display: flex; gap: 12px">
+        <el-input v-model="checkPersonInput" placeholder="请输入清点人" maxlength="20" style="width: 180px" />
         <el-input v-model="remarkInput" placeholder="清点备注（可选）" maxlength="100" show-word-limit style="width: 280px" />
-        <el-button type="primary" :loading="submitting" @click="handleSubmitInventory" :disabled="!hasAnyInput">
+        <el-button type="primary" :loading="submitting" @click="handleSubmitInventory" :disabled="!hasAnyInput || !checkPersonInput">
           <el-icon><Check /></el-icon>
           <span class="ml-8">一键提交清点</span>
         </el-button>
@@ -116,6 +117,7 @@
 
     <el-dialog v-model="submitDialogVisible" title="清点提交确认" width="500px">
       <el-descriptions :column="1" border size="small">
+        <el-descriptions-item label="清点人">{{ checkPersonInput }}</el-descriptions-item>
         <el-descriptions-item label="配件总数">{{ dataList.length }} 项</el-descriptions-item>
         <el-descriptions-item label="已盘点">{{ filledCount }} 项</el-descriptions-item>
         <el-descriptions-item label="账实相符">{{ matchCount }} 项</el-descriptions-item>
@@ -144,7 +146,7 @@ import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search } from '@element-plus/icons-vue'
 import { getAccessoryList } from '@/api/accessory'
-import { createInventory } from '@/api/inventory'
+import { createBatchInventory } from '@/api/inventory'
 
 const loading = ref(false)
 const submitting = ref(false)
@@ -155,6 +157,7 @@ const currentPage = ref(1)
 const pageSize = ref(10)
 const submitDialogVisible = ref(false)
 const remarkInput = ref('')
+const checkPersonInput = ref('')
 
 const dataList = ref([])
 
@@ -309,7 +312,8 @@ const confirmSubmit = async () => {
 
   submitting.value = true
   try {
-    await createInventory({
+    await createBatchInventory({
+      checkPerson: checkPersonInput.value,
       remark: remarkInput.value,
       details
     })
@@ -317,6 +321,7 @@ const confirmSubmit = async () => {
     loadData()
     submitDialogVisible.value = false
     remarkInput.value = ''
+    checkPersonInput.value = ''
   } catch (error) {
     console.error('提交清点失败:', error)
     ElMessage.error('提交清点失败，请稍后重试')

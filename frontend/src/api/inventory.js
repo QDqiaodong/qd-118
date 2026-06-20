@@ -16,6 +16,14 @@ export function createInventory(data) {
   })
 }
 
+export function createBatchInventory(data) {
+  return request({
+    url: '/inventory-checks/batch',
+    method: 'post',
+    data
+  })
+}
+
 export function getInventoryDetail(id) {
   return request({
     url: `/inventory-checks/${id}`,

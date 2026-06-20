@@ -2,6 +2,7 @@ package com.weakcurrent.service.impl;
 
 import com.weakcurrent.common.BusinessException;
 import com.weakcurrent.common.ResultCode;
+import com.weakcurrent.dto.InventoryCheckBatchCreateDTO;
 import com.weakcurrent.dto.InventoryCheckCreateDTO;
 import com.weakcurrent.dto.InventoryCheckUpdateDTO;
 import com.weakcurrent.dto.InventoryCheckWizardDTO;
@@ -58,6 +59,53 @@ public class InventoryCheckServiceImpl implements InventoryCheckService {
         check.setRemark(dto.getRemark());
 
         return inventoryCheckRepository.save(check);
+    }
+
+    @Override
+    @Transactional
+    public List<InventoryCheck> createBatch(InventoryCheckBatchCreateDTO dto) {
+        Map<Long, Accessory> accessoryCache = new HashMap<>();
+        LocalDateTime checkTime = dto.getCheckTime() != null ? dto.getCheckTime() : LocalDateTime.now();
+        List<InventoryCheck> results = new ArrayList<>();
+
+        for (InventoryCheckBatchCreateDTO.InventoryCheckBatchItem item : dto.getDetails()) {
+            if (item.getAccessoryId() == null || item.getActualQuantity() == null) {
+                continue;
+            }
+
+            Accessory accessory = accessoryCache.computeIfAbsent(item.getAccessoryId(),
+                    id -> accessoryService.getById(id));
+
+            int systemQuantity = accessory.getStockQuantity();
+            int physicalQuantity = item.getActualQuantity();
+            int difference = physicalQuantity - systemQuantity;
+
+            if (difference != 0) {
+                if (difference > 0) {
+                    accessoryService.addStock(accessory.getId(), difference);
+                } else {
+                    if (systemQuantity < -difference) {
+                        throw new BusinessException(ResultCode.STOCK_INSUFFICIENT,
+                                "配件【" + accessory.getName() + "】清点亏损数量超过现有库存");
+                    }
+                    accessoryService.deductStock(accessory.getId(), -difference);
+                }
+            }
+
+            InventoryCheck check = new InventoryCheck();
+            check.setAccessoryId(accessory.getId());
+            check.setAccessoryName(accessory.getName());
+            check.setPhysicalQuantity(physicalQuantity);
+            check.setSystemQuantity(systemQuantity);
+            check.setDifference(difference);
+            check.setCheckPerson(dto.getCheckPerson());
+            check.setCheckTime(checkTime);
+            check.setRemark(dto.getRemark());
+
+            results.add(inventoryCheckRepository.save(check));
+        }
+
+        return results;
     }
 
     @Override
@@ -119,11 +167,12 @@ public class InventoryCheckServiceImpl implements InventoryCheckService {
         Accessory accessory = accessoryService.getById(dto.getAccessoryId());
 
         int oldDifference = check.getDifference();
+        Long originalAccessoryId = check.getAccessoryId();
         if (oldDifference != 0) {
             if (oldDifference > 0) {
-                accessoryService.deductStock(dto.getAccessoryId(), oldDifference);
+                accessoryService.deductStock(originalAccessoryId, oldDifference);
             } else {
-                accessoryService.addStock(dto.getAccessoryId(), -oldDifference);
+                accessoryService.addStock(originalAccessoryId, -oldDifference);
             }
         }
 

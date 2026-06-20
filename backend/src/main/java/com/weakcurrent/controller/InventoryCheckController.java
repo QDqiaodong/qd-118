@@ -1,6 +1,7 @@
 package com.weakcurrent.controller;
 
 import com.weakcurrent.common.Result;
+import com.weakcurrent.dto.InventoryCheckBatchCreateDTO;
 import com.weakcurrent.dto.InventoryCheckCreateDTO;
 import com.weakcurrent.dto.InventoryCheckUpdateDTO;
 import com.weakcurrent.dto.InventoryCheckWizardDTO;
@@ -22,6 +23,11 @@ public class InventoryCheckController {
     @PostMapping
     public Result<InventoryCheck> create(@Valid @RequestBody InventoryCheckCreateDTO dto) {
         return Result.success(inventoryCheckService.create(dto));
+    }
+
+    @PostMapping("/batch")
+    public Result<List<InventoryCheck>> createBatch(@Valid @RequestBody InventoryCheckBatchCreateDTO dto) {
+        return Result.success(inventoryCheckService.createBatch(dto));
     }
 
     @PostMapping("/wizard-batch")
