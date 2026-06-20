@@ -1,11 +1,31 @@
 import request from '@/utils/request'
 
+const mapAccessoryFields = (item) => ({
+  ...item,
+  quantity: item.stockQuantity ?? item.quantity,
+  zone: item.warehouseZone ?? item.zone
+})
+
+const mapAccessoryList = (data) => {
+  if (!data) return data
+  if (Array.isArray(data)) {
+    return data.map(mapAccessoryFields)
+  }
+  if (data.records && Array.isArray(data.records)) {
+    return { ...data, records: data.records.map(mapAccessoryFields) }
+  }
+  if (data.list && Array.isArray(data.list)) {
+    return { ...data, list: data.list.map(mapAccessoryFields) }
+  }
+  return data
+}
+
 export function getAccessoryPage(params) {
   return request({
     url: '/accessories',
     method: 'get',
     params
-  })
+  }).then((data) => mapAccessoryList(data))
 }
 
 export function getAccessoryList(params) {
@@ -13,14 +33,14 @@ export function getAccessoryList(params) {
     url: '/accessories',
     method: 'get',
     params
-  })
+  }).then((data) => mapAccessoryList(data))
 }
 
 export function getAccessoryById(id) {
   return request({
     url: `/accessories/${id}`,
     method: 'get'
-  })
+  }).then((data) => data ? mapAccessoryFields(data) : data)
 }
 
 export function addAccessory(data) {
@@ -33,11 +53,11 @@ export function addAccessory(data) {
       spec: data.spec,
       categoryId: data.categoryId,
       categoryName: data.categoryName,
-      stockQuantity: data.quantity,
-      warehouseZone: data.zone,
+      stockQuantity: data.quantity ?? data.stockQuantity,
+      warehouseZone: data.zone ?? data.warehouseZone,
       unit: data.unit
     }
-  })
+  }).then((res) => res ? mapAccessoryFields(res) : res)
 }
 
 export function updateAccessory(data) {
@@ -51,11 +71,11 @@ export function updateAccessory(data) {
       spec: data.spec,
       categoryId: data.categoryId,
       categoryName: data.categoryName,
-      stockQuantity: data.quantity,
-      warehouseZone: data.zone,
+      stockQuantity: data.quantity ?? data.stockQuantity,
+      warehouseZone: data.zone ?? data.warehouseZone,
       unit: data.unit
     }
-  })
+  }).then((res) => res ? mapAccessoryFields(res) : res)
 }
 
 export function deleteAccessory(id) {

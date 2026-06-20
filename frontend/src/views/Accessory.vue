@@ -59,17 +59,21 @@
         </template>
       </el-table-column>
       <el-table-column prop="unit" label="单位" width="80" align="center" />
-      <el-table-column label="入库数量" width="120" align="center">
+      <el-table-column label="库存数量" width="120" align="center">
         <template #default="{ row }">
           <span style="color: #67c23a; font-weight: 600">{{ formatNumber(row.quantity) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="库房分区" width="100" align="center">
+      <el-table-column label="库区" width="120" align="center">
         <template #default="{ row }">
-          <el-tag :type="zoneTagType(row.zone)" size="small">{{ row.zone ? row.zone + '区' : '-' }}</el-tag>
+          <el-tag :type="zoneTagType(row.zone)" size="small">{{ row.zone || '-' }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="createTime" label="创建时间" width="170" align="center" />
+      <el-table-column label="创建时间" width="170" align="center">
+        <template #default="{ row }">
+          <span>{{ row.createTime || '-' }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="操作" width="180" align="center" fixed="right">
         <template #default="{ row }">
           <el-button type="primary" link @click="handleEdit(row)">
@@ -255,7 +259,8 @@ const formatNumber = (num) => {
 
 const zoneTagType = (zone) => {
   const map = { A: 'primary', B: 'success', C: 'warning', D: 'danger' }
-  return map[zone] || 'info'
+  const prefix = zone ? zone.charAt(0).toUpperCase() : ''
+  return map[prefix] || 'info'
 }
 
 const findNodeById = (list, id) => {
@@ -328,7 +333,7 @@ const filteredList = computed(() => {
       ok = ok && matchCategory(item.categoryId)
     }
     if (searchZone.value) {
-      ok = ok && item.zone === searchZone.value
+      ok = ok && item.zone && item.zone.charAt(0).toUpperCase() === searchZone.value.charAt(0).toUpperCase()
     }
     return ok
   })

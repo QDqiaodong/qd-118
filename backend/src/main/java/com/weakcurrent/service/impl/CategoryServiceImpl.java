@@ -44,9 +44,11 @@ public class CategoryServiceImpl implements CategoryService {
     public AccessoryCategory create(CategoryCreateDTO dto) {
         AccessoryCategory category = new AccessoryCategory();
         category.setName(dto.getName());
+        category.setCode(dto.getCode());
         category.setParentId(dto.getParentId());
         category.setSort(dto.getSort() != null ? dto.getSort() : 0);
         category.setEnabled(dto.getEnabled() != null ? dto.getEnabled() : true);
+        category.setRemark(dto.getRemark());
 
         AccessoryCategory saved = categoryRepository.save(category);
         clearCache();
@@ -69,9 +71,11 @@ public class CategoryServiceImpl implements CategoryService {
         }
 
         category.setName(dto.getName());
+        category.setCode(dto.getCode());
         category.setParentId(dto.getParentId());
         category.setSort(dto.getSort() != null ? dto.getSort() : 0);
         category.setEnabled(dto.getEnabled() != null ? dto.getEnabled() : true);
+        category.setRemark(dto.getRemark());
 
         AccessoryCategory saved = categoryRepository.save(category);
         clearCache();

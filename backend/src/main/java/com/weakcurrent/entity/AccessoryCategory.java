@@ -19,6 +19,9 @@ public class AccessoryCategory {
     @Column(name = "name", nullable = false, length = 100)
     private String name;
 
+    @Column(name = "code", length = 32, unique = true)
+    private String code;
+
     @Column(name = "parent_id", nullable = false)
     private Long parentId = 0L;
 
@@ -27,6 +30,9 @@ public class AccessoryCategory {
 
     @Column(name = "enabled", nullable = false)
     private Boolean enabled = true;
+
+    @Column(name = "remark", length = 500)
+    private String remark;
 
     @CreationTimestamp
     @Column(name = "create_time", updatable = false)

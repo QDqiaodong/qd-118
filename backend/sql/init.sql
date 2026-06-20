@@ -10,12 +10,15 @@ SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE TABLE IF NOT EXISTS accessory_category (
     id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     name VARCHAR(100) NOT NULL COMMENT '分类名称',
+    code VARCHAR(32) COMMENT '分类编码',
     parent_id BIGINT NOT NULL DEFAULT 0 COMMENT '父级ID，0表示顶级',
     sort INT NOT NULL DEFAULT 0 COMMENT '排序值',
     enabled TINYINT(1) NOT NULL DEFAULT 1 COMMENT '启用状态：1启用 0停用',
+    remark VARCHAR(500) COMMENT '备注',
     create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     PRIMARY KEY (id),
-    INDEX idx_parent_id (parent_id)
+    INDEX idx_parent_id (parent_id),
+    UNIQUE KEY uk_code (code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='配件分类表';
 
 -- 配件表
@@ -86,22 +89,22 @@ CREATE TABLE IF NOT EXISTS scrap_record (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='报废归档表';
 
 -- 初始化分类数据
-INSERT IGNORE INTO accessory_category (id, name, parent_id, sort) VALUES
-(1, '接线端子', 0, 1),
-(2, '线槽', 0, 2),
-(3, '固定卡扣', 0, 3),
+INSERT IGNORE INTO accessory_category (id, name, code, parent_id, sort, remark) VALUES
+(1, '接线端子', 'TERMINAL', 0, 1, '各类接线端子产品'),
+(2, '线槽', 'DUCT', 0, 2, '各类线槽产品'),
+(3, '固定卡扣', 'CLIP', 0, 3, '各类固定卡扣产品'),
 -- 接线端子子分类
-(4, '螺钉式接线端子', 1, 1),
-(5, '弹簧式接线端子', 1, 2),
-(6, '插拔式接线端子', 1, 3),
+(4, '螺钉式接线端子', 'TERMINAL-SCREW', 1, 1, '螺钉连接式接线端子'),
+(5, '弹簧式接线端子', 'TERMINAL-SPRING', 1, 2, '弹簧连接式接线端子'),
+(6, '插拔式接线端子', 'TERMINAL-PLUG', 1, 3, '插拔式接线端子'),
 -- 线槽子分类
-(7, 'PVC方形线槽', 2, 1),
-(8, '金属桥架线槽', 2, 2),
-(9, '圆形波纹管', 2, 3),
+(7, 'PVC方形线槽', 'DUCT-PVC', 2, 1, 'PVC材质方形线槽'),
+(8, '金属桥架线槽', 'DUCT-METAL', 2, 2, '金属材质桥架线槽'),
+(9, '圆形波纹管', 'DUCT-CORRUGATED', 2, 3, '圆形塑料波纹管'),
 -- 固定卡扣子分类
-(10, '线卡卡扣', 3, 1),
-(11, '扎带卡扣', 3, 2),
-(12, '导轨卡扣', 3, 3);
+(10, '线卡卡扣', 'CLIP-WIRE', 3, 1, '钢钉线卡类卡扣'),
+(11, '扎带卡扣', 'CLIP-TIE', 3, 2, '尼龙扎带类卡扣'),
+(12, '导轨卡扣', 'CLIP-RAIL', 3, 3, 'C45导轨安装卡扣');
 
 -- 初始化示例配件数据
 INSERT INTO accessory (name, model, spec, category_id, category_name, stock_quantity, warehouse_zone, unit) VALUES
