@@ -14,7 +14,8 @@ public enum ResultCode {
     NOT_FOUND(404, "资源不存在"),
     INTERNAL_SERVER_ERROR(500, "服务器内部错误"),
     STOCK_INSUFFICIENT(1001, "库存不足"),
-    DATA_NOT_FOUND(1002, "数据不存在");
+    DATA_NOT_FOUND(1002, "数据不存在"),
+    CATEGORY_CIRCULAR_REFERENCE(1003, "父级分类不能是自身或其子孙节点");
 
     private final Integer code;
     private final String message;

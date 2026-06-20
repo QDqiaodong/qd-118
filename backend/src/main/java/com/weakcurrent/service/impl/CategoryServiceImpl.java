@@ -59,6 +59,15 @@ public class CategoryServiceImpl implements CategoryService {
         AccessoryCategory category = categoryRepository.findById(dto.getId())
                 .orElseThrow(() -> new BusinessException(ResultCode.DATA_NOT_FOUND));
 
+        Long newParentId = dto.getParentId();
+        if (newParentId != null && !newParentId.equals(0L)) {
+            List<AccessoryCategory> allCategories = categoryRepository.findAllByOrderBySortAsc();
+            Set<Long> descendantIds = collectDescendantIds(dto.getId(), allCategories);
+            if (descendantIds.contains(newParentId)) {
+                throw new BusinessException(ResultCode.CATEGORY_CIRCULAR_REFERENCE);
+            }
+        }
+
         category.setName(dto.getName());
         category.setParentId(dto.getParentId());
         category.setSort(dto.getSort() != null ? dto.getSort() : 0);
