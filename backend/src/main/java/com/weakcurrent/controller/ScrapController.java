@@ -1,6 +1,7 @@
 package com.weakcurrent.controller;
 
 import com.weakcurrent.common.Result;
+import com.weakcurrent.dto.ScrapCreateBatchDTO;
 import com.weakcurrent.dto.ScrapCreateDTO;
 import com.weakcurrent.dto.ScrapUpdateDTO;
 import com.weakcurrent.entity.ScrapRecord;
@@ -21,6 +22,11 @@ public class ScrapController {
     @PostMapping
     public Result<ScrapRecord> create(@Valid @RequestBody ScrapCreateDTO dto) {
         return Result.success(scrapService.create(dto));
+    }
+
+    @PostMapping("/batch")
+    public Result<List<ScrapRecord>> createBatch(@Valid @RequestBody ScrapCreateBatchDTO dto) {
+        return Result.success(scrapService.createBatch(dto));
     }
 
     @PutMapping

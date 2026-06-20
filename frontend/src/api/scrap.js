@@ -24,6 +24,14 @@ export function createScrap(data) {
   })
 }
 
+export function createScrapBatch(data) {
+  return request({
+    url: '/scrap-records/batch',
+    method: 'post',
+    data
+  })
+}
+
 export function deleteScrap(id) {
   return request({
     url: `/scrap-records/${id}`,

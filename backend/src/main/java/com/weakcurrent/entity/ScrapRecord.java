@@ -20,6 +20,12 @@ public class ScrapRecord {
     @Column(name = "accessory_name", length = 100)
     private String accessoryName;
 
+    @Column(name = "accessory_model", length = 100)
+    private String accessoryModel;
+
+    @Column(name = "unit", length = 20)
+    private String unit;
+
     @Column(name = "quantity", nullable = false)
     private Integer quantity;
 
@@ -32,6 +38,16 @@ public class ScrapRecord {
     @Column(name = "scrap_time", nullable = false)
     private LocalDateTime scrapTime;
 
+    @Column(name = "create_time", nullable = false)
+    private LocalDateTime createTime;
+
     @Column(name = "remark", length = 500)
     private String remark;
+
+    @PrePersist
+    protected void onCreate() {
+        if (createTime == null) {
+            createTime = scrapTime != null ? scrapTime : LocalDateTime.now();
+        }
+    }
 }

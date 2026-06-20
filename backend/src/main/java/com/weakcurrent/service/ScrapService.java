@@ -1,5 +1,6 @@
 package com.weakcurrent.service;
 
+import com.weakcurrent.dto.ScrapCreateBatchDTO;
 import com.weakcurrent.dto.ScrapCreateDTO;
 import com.weakcurrent.dto.ScrapUpdateDTO;
 import com.weakcurrent.entity.ScrapRecord;
@@ -9,6 +10,8 @@ import java.util.List;
 public interface ScrapService {
 
     ScrapRecord create(ScrapCreateDTO dto);
+
+    List<ScrapRecord> createBatch(ScrapCreateBatchDTO dto);
 
     ScrapRecord update(ScrapUpdateDTO dto);
 
