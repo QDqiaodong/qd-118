@@ -17,6 +17,14 @@ public interface AccessoryRepository extends JpaRepository<Accessory, Long> {
 
     List<Accessory> findByNameContaining(String name);
 
+    List<Accessory> findByWarehouseZone(String warehouseZone);
+
     @Query("SELECT COALESCE(SUM(a.stockQuantity), 0) FROM Accessory a")
     Integer sumAllStockQuantity();
+
+    @Query("SELECT a.warehouseZone, COUNT(a), COALESCE(SUM(a.stockQuantity), 0) " +
+           "FROM Accessory a " +
+           "WHERE a.warehouseZone IS NOT NULL AND a.warehouseZone <> '' " +
+           "GROUP BY a.warehouseZone")
+    List<Object[]> countAndSumByWarehouseZone();
 }

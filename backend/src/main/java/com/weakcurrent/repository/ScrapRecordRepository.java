@@ -18,4 +18,11 @@ public interface ScrapRecordRepository extends JpaRepository<ScrapRecord, Long> 
 
     @Query("SELECT COALESCE(SUM(s.quantity), 0) FROM ScrapRecord s WHERE s.scrapTime BETWEEN :start AND :end")
     Integer sumQuantityByScrapTimeBetween(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+
+    @Query("SELECT a.warehouseZone, COALESCE(SUM(s.quantity), 0) " +
+           "FROM ScrapRecord s " +
+           "JOIN Accessory a ON s.accessoryId = a.id " +
+           "WHERE a.warehouseZone IS NOT NULL AND a.warehouseZone <> '' " +
+           "GROUP BY a.warehouseZone")
+    List<Object[]> sumScrapQuantityByWarehouseZone();
 }

@@ -42,6 +42,12 @@ const routes = [
     name: 'Scrap',
     component: () => import('@/views/Scrap.vue'),
     meta: { title: '老化配件报废归档' }
+  },
+  {
+    path: '/warehouse-map',
+    name: 'WarehouseMap',
+    component: () => import('@/views/WarehouseMap.vue'),
+    meta: { title: '库房分区货位图' }
   }
 ]
 

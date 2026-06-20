@@ -43,6 +43,10 @@
           <el-icon><Delete /></el-icon>
           <template #title>报废归档</template>
         </el-menu-item>
+        <el-menu-item index="/warehouse-map">
+          <el-icon><Grid /></el-icon>
+          <template #title>货位图</template>
+        </el-menu-item>
       </el-menu>
     </el-aside>
 
