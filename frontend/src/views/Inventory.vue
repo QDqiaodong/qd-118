@@ -259,9 +259,10 @@ const mapAccessoryFields = (item) => ({
 const loadData = async () => {
   loading.value = true
   try {
-    const data = await getAccessoryList()
-    if (data && Array.isArray(data)) {
-      dataList.value = data.map((item) => ({
+    const data = await getAccessoryList({ pageNum: 1, pageSize: 9999 })
+    if (data) {
+      const list = data.records || data.list || data || []
+      dataList.value = list.map((item) => ({
         ...mapAccessoryFields(item),
         actualQuantity: null
       }))

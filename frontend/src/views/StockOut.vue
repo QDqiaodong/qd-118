@@ -163,7 +163,7 @@
         class="mt-16"
         background
         layout="total, sizes, prev, pager, next, jumper"
-        :total="filteredHistory.length"
+        :total="filteredHistoryList.length"
         :page-sizes="[10, 20, 50, 100]"
         v-model:current-page="historyPage"
         v-model:page-size="historyPageSize"
@@ -240,11 +240,16 @@ const isQuantityOverStock = computed(() => {
   return outForm.quantity > selectedAccessory.value.quantity
 })
 
-const filteredHistory = computed(() => {
+const filteredHistoryList = computed(() => {
   let list = historyList.value
   if (filterWorkshop.value) {
     list = list.filter((h) => h.workshop === filterWorkshop.value)
   }
+  return list
+})
+
+const filteredHistory = computed(() => {
+  const list = filteredHistoryList.value
   const start = (historyPage.value - 1) * historyPageSize.value
   return list.slice(start, start + historyPageSize.value)
 })
@@ -306,9 +311,10 @@ const resetOutForm = () => {
 
 const loadAccessoryList = async () => {
   try {
-    const data = await getAccessoryList()
-    if (data && Array.isArray(data)) {
-      accessoryList.value = data.map(mapAccessoryFields)
+    const data = await getAccessoryList({ pageNum: 1, pageSize: 9999 })
+    if (data) {
+      const list = data.records || data.list || data || []
+      accessoryList.value = list.map(mapAccessoryFields)
     }
   } catch (error) {
     console.error('加载配件列表失败:', error)
