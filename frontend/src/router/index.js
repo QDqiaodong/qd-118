@@ -38,6 +38,18 @@ const routes = [
     meta: { title: '半年度库房清点' }
   },
   {
+    path: '/inventory-wizard',
+    name: 'InventoryWizard',
+    component: () => import('@/views/InventoryWizard.vue'),
+    meta: { title: '半年度清点向导' }
+  },
+  {
+    path: '/trunk-spec',
+    name: 'TrunkSpec',
+    component: () => import('@/views/TrunkSpec.vue'),
+    meta: { title: '线槽规格对照面板' }
+  },
+  {
     path: '/scrap',
     name: 'Scrap',
     component: () => import('@/views/Scrap.vue'),

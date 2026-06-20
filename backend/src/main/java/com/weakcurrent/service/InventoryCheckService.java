@@ -2,6 +2,7 @@ package com.weakcurrent.service;
 
 import com.weakcurrent.dto.InventoryCheckCreateDTO;
 import com.weakcurrent.dto.InventoryCheckUpdateDTO;
+import com.weakcurrent.dto.InventoryCheckWizardDTO;
 import com.weakcurrent.entity.InventoryCheck;
 
 import java.util.List;
@@ -9,6 +10,8 @@ import java.util.List;
 public interface InventoryCheckService {
 
     InventoryCheck create(InventoryCheckCreateDTO dto);
+
+    List<InventoryCheck> createWizardBatch(InventoryCheckWizardDTO dto);
 
     InventoryCheck update(InventoryCheckUpdateDTO dto);
 

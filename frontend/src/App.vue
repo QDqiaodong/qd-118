@@ -39,6 +39,14 @@
           <el-icon><Tickets /></el-icon>
           <template #title>库房清点</template>
         </el-menu-item>
+        <el-menu-item index="/inventory-wizard">
+          <el-icon><Guide /></el-icon>
+          <template #title>清点向导</template>
+        </el-menu-item>
+        <el-menu-item index="/trunk-spec">
+          <el-icon><Collection /></el-icon>
+          <template #title>线槽规格对照</template>
+        </el-menu-item>
         <el-menu-item index="/scrap">
           <el-icon><Delete /></el-icon>
           <template #title>报废归档</template>

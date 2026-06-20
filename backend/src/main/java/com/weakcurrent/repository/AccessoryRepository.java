@@ -19,6 +19,8 @@ public interface AccessoryRepository extends JpaRepository<Accessory, Long> {
 
     List<Accessory> findByWarehouseZone(String warehouseZone);
 
+    List<Accessory> findByWarehouseZoneStartingWith(String zonePrefix);
+
     @Query("SELECT COALESCE(SUM(a.stockQuantity), 0) FROM Accessory a")
     Integer sumAllStockQuantity();
 
