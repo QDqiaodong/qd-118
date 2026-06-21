@@ -293,3 +293,50 @@ body {
     overflow: visible;
   }
 }
+
+.caliber-popover.el-popover.el-popper {
+  padding: 14px 16px;
+
+  .caliber-panel {
+    font-size: 13px;
+    color: #606266;
+    line-height: 1.6;
+  }
+
+  .caliber-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 8px;
+
+    .el-icon {
+      color: #409eff;
+    }
+  }
+
+  .caliber-scope {
+    color: #909399;
+    margin-bottom: 8px;
+  }
+
+  .caliber-list {
+    padding-left: 18px;
+    margin: 0 0 8px;
+
+    li {
+      list-style: disc;
+      margin-bottom: 4px;
+    }
+  }
+
+  .caliber-note {
+    color: #b88230;
+    background: #fdf6ec;
+    border-radius: 4px;
+    padding: 6px 8px;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+}

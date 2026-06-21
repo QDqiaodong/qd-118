@@ -10,6 +10,7 @@ import com.weakcurrent.entity.Accessory;
 import com.weakcurrent.entity.ScrapRecord;
 import com.weakcurrent.repository.ScrapRecordRepository;
 import com.weakcurrent.service.AccessoryService;
+import com.weakcurrent.service.DashboardService;
 import com.weakcurrent.service.ScrapService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -27,6 +28,7 @@ public class ScrapServiceImpl implements ScrapService {
 
     private final ScrapRecordRepository scrapRecordRepository;
     private final AccessoryService accessoryService;
+    private final DashboardService dashboardService;
 
     @Override
     @Transactional
@@ -52,7 +54,10 @@ public class ScrapServiceImpl implements ScrapService {
         scrap.setScrapTime(dto.getScrapTime() != null ? dto.getScrapTime() : LocalDateTime.now());
         scrap.setRemark(dto.getRemark());
 
-        return scrapRecordRepository.save(scrap);
+        ScrapRecord saved = scrapRecordRepository.save(scrap);
+        dashboardService.evictMonthScrap();
+        dashboardService.evictInventoryOverview();
+        return saved;
     }
 
     @Override
@@ -120,6 +125,8 @@ public class ScrapServiceImpl implements ScrapService {
             records.add(scrapRecordRepository.save(scrap));
         }
 
+        dashboardService.evictMonthScrap();
+        dashboardService.evictInventoryOverview();
         return records;
     }
 
@@ -167,7 +174,10 @@ public class ScrapServiceImpl implements ScrapService {
         scrap.setScrapTime(dto.getScrapTime());
         scrap.setRemark(dto.getRemark());
 
-        return scrapRecordRepository.save(scrap);
+        ScrapRecord saved = scrapRecordRepository.save(scrap);
+        dashboardService.evictMonthScrap();
+        dashboardService.evictInventoryOverview();
+        return saved;
     }
 
     @Override
@@ -179,6 +189,8 @@ public class ScrapServiceImpl implements ScrapService {
         accessoryService.addStock(scrap.getAccessoryId(), scrap.getQuantity());
 
         scrapRecordRepository.deleteById(id);
+        dashboardService.evictMonthScrap();
+        dashboardService.evictInventoryOverview();
     }
 
     @Override

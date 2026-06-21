@@ -8,6 +8,7 @@ import com.weakcurrent.entity.Accessory;
 import com.weakcurrent.entity.StockOut;
 import com.weakcurrent.repository.StockOutRepository;
 import com.weakcurrent.service.AccessoryService;
+import com.weakcurrent.service.DashboardService;
 import com.weakcurrent.service.StockOutService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,6 +23,7 @@ public class StockOutServiceImpl implements StockOutService {
 
     private final StockOutRepository stockOutRepository;
     private final AccessoryService accessoryService;
+    private final DashboardService dashboardService;
 
     @Override
     @Transactional
@@ -40,7 +42,10 @@ public class StockOutServiceImpl implements StockOutService {
         stockOut.setOutTime(dto.getOutTime() != null ? dto.getOutTime() : LocalDateTime.now());
         stockOut.setRemark(dto.getRemark());
 
-        return stockOutRepository.save(stockOut);
+        StockOut saved = stockOutRepository.save(stockOut);
+        dashboardService.evictMonthStockOut();
+        dashboardService.evictInventoryOverview();
+        return saved;
     }
 
     @Override
@@ -77,7 +82,10 @@ public class StockOutServiceImpl implements StockOutService {
         stockOut.setOutTime(dto.getOutTime());
         stockOut.setRemark(dto.getRemark());
 
-        return stockOutRepository.save(stockOut);
+        StockOut saved = stockOutRepository.save(stockOut);
+        dashboardService.evictMonthStockOut();
+        dashboardService.evictInventoryOverview();
+        return saved;
     }
 
     @Override
@@ -89,6 +97,8 @@ public class StockOutServiceImpl implements StockOutService {
         accessoryService.addStock(stockOut.getAccessoryId(), stockOut.getQuantity());
 
         stockOutRepository.deleteById(id);
+        dashboardService.evictMonthStockOut();
+        dashboardService.evictInventoryOverview();
     }
 
     @Override
