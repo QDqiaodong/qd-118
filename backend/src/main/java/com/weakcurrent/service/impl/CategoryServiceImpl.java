@@ -206,8 +206,9 @@ public class CategoryServiceImpl implements CategoryService {
         List<String> pathNames = new ArrayList<>();
         Long currentId = categoryId;
         while (currentId != null && !currentId.equals(0L)) {
+            Long lookupId = currentId;
             AccessoryCategory current = allCategories.stream()
-                    .filter(c -> c.getId().equals(currentId))
+                    .filter(c -> c.getId().equals(lookupId))
                     .findFirst()
                     .orElse(null);
             if (current == null) {
