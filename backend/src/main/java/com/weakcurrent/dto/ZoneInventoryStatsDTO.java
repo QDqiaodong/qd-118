@@ -33,6 +33,8 @@ public class ZoneInventoryStatsDTO {
         private String categoryType;
         private Integer systemQuantity;
         private Integer physicalQuantity;
+        private Integer difference;
+        private String status;
         private String unit;
         private Boolean filled;
     }

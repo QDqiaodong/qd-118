@@ -147,9 +147,9 @@
         </el-table-column>
         <el-table-column label="差异" width="100" align="center">
           <template #default="{ row }">
-            <span v-if="row.physicalQuantity !== null && row.physicalQuantity !== undefined">
-              <el-tag :type="getDiffTagType(row)" size="small">
-                {{ getDiff(row) > 0 ? '+' : '' }}{{ formatNumber(getDiff(row)) }}
+            <span v-if="row.status !== 'UNFILLED' && row.difference !== null && row.difference !== undefined">
+              <el-tag :type="getStatusTagType(row.status)" size="small">
+                {{ row.difference > 0 ? '+' : '' }}{{ formatNumber(row.difference) }}
               </el-tag>
             </span>
             <span v-else style="color: #c0c4cc">-</span>
@@ -157,8 +157,7 @@
         </el-table-column>
         <el-table-column label="状态" width="100" align="center">
           <template #default="{ row }">
-            <el-tag v-if="row.filled" type="success" size="small">已录入</el-tag>
-            <el-tag v-else type="info" size="small">未录入</el-tag>
+            <el-tag :type="getStatusTagType(row.status)" size="small">{{ getStatusLabel(row.status) }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="unit" label="单位" width="80" align="center" />
@@ -255,28 +254,42 @@ const getCategoryTagType = (type) => {
   return map[type] || 'info'
 }
 
-const getDiff = (row) => {
-  if (row.physicalQuantity === null || row.physicalQuantity === undefined) return null
-  return row.physicalQuantity - row.systemQuantity
+const getStatusLabel = (status) => {
+  const map = { UNFILLED: '未录入', MATCH: '已录入', SURPLUS: '盘盈', LOSS: '盘亏' }
+  return map[status] || '未录入'
 }
 
-const getDiffTagType = (row) => {
-  const diff = getDiff(row)
-  if (diff === null) return 'info'
-  if (diff === 0) return 'success'
-  if (diff > 0) return 'danger'
-  return 'warning'
+const getStatusTagType = (status) => {
+  const map = { UNFILLED: 'info', MATCH: 'success', SURPLUS: 'danger', LOSS: 'warning' }
+  return map[status] || 'info'
+}
+
+const recalcItemStatus = (row) => {
+  if (row.physicalQuantity === null || row.physicalQuantity === undefined) {
+    row.difference = null
+    row.status = 'UNFILLED'
+    row.filled = false
+  } else {
+    const diff = row.physicalQuantity - row.systemQuantity
+    row.difference = diff
+    if (diff === 0) {
+      row.status = 'MATCH'
+    } else if (diff > 0) {
+      row.status = 'SURPLUS'
+    } else {
+      row.status = 'LOSS'
+    }
+    row.filled = true
+  }
 }
 
 const onActualChange = (row) => {
-  if (row.physicalQuantity !== null && row.physicalQuantity !== undefined) {
-    if (!row.filled) {
-      row.filled = true
-      currentZoneStats.value.unfilledCount--
-    }
-  } else {
+  const wasFilled = row.filled
+  recalcItemStatus(row)
+  if (wasFilled !== row.filled) {
     if (row.filled) {
-      row.filled = false
+      currentZoneStats.value.unfilledCount--
+    } else {
       currentZoneStats.value.unfilledCount++
     }
   }
@@ -284,7 +297,7 @@ const onActualChange = (row) => {
 
 const getFilledCountByType = (type) => {
   if (!currentZoneStats.value) return 0
-  return currentZoneStats.value.items.filter(item => item.categoryType === type && item.filled).length
+  return currentZoneStats.value.items.filter(item => item.categoryType === type && item.status !== 'UNFILLED').length
 }
 
 const filteredItems = computed(() => {
@@ -293,7 +306,7 @@ const filteredItems = computed(() => {
   let items = currentZoneStats.value.items
 
   if (filterType.value === 'unfilled') {
-    items = items.filter(item => !item.filled)
+    items = items.filter(item => item.status === 'UNFILLED')
   } else if (filterType.value !== 'all') {
     items = items.filter(item => item.categoryType === filterType.value)
   }
@@ -304,22 +317,22 @@ const filteredItems = computed(() => {
 
 const filledCount = computed(() => {
   if (!currentZoneStats.value) return 0
-  return currentZoneStats.value.items.filter(r => r.filled).length
+  return currentZoneStats.value.items.filter(r => r.status && r.status !== 'UNFILLED').length
 })
 
 const matchCount = computed(() => {
   if (!currentZoneStats.value) return 0
-  return currentZoneStats.value.items.filter(r => r.filled && getDiff(r) === 0).length
+  return currentZoneStats.value.items.filter(r => r.status === 'MATCH').length
 })
 
 const surplusCount = computed(() => {
   if (!currentZoneStats.value) return 0
-  return currentZoneStats.value.items.filter(r => r.filled && getDiff(r) > 0).length
+  return currentZoneStats.value.items.filter(r => r.status === 'SURPLUS').length
 })
 
 const lossCount = computed(() => {
   if (!currentZoneStats.value) return 0
-  return currentZoneStats.value.items.filter(r => r.filled && getDiff(r) < 0).length
+  return currentZoneStats.value.items.filter(r => r.status === 'LOSS').length
 })
 
 const totalSystem = computed(() => {
@@ -335,8 +348,8 @@ const totalActual = computed(() => {
 const totalDiff = computed(() => {
   if (!currentZoneStats.value) return 0
   return currentZoneStats.value.items.reduce((sum, r) => {
-    if (!r.filled) return sum
-    return sum + (r.physicalQuantity - r.systemQuantity)
+    if (r.status === 'UNFILLED' || r.difference === null || r.difference === undefined) return sum
+    return sum + r.difference
   }, 0)
 })
 
@@ -371,8 +384,8 @@ const loadZoneStats = async (zone) => {
     if (data) {
       data.items = data.items.map(item => ({
         ...item,
-        physicalQuantity: null,
-        filled: false
+        status: item.status || 'UNFILLED',
+        filled: item.filled !== undefined ? item.filled : (item.status && item.status !== 'UNFILLED')
       }))
       zoneStatsMap.value[zone] = data
       currentZoneStats.value = data
@@ -393,25 +406,31 @@ const switchZone = (index) => {
 
 const handleFillZone = () => {
   if (!currentZoneStats.value) return
+  let filledAdded = 0
   currentZoneStats.value.items.forEach((row) => {
+    const wasUnfilled = row.status === 'UNFILLED'
     row.physicalQuantity = row.systemQuantity
-    if (!row.filled) {
-      row.filled = true
-      currentZoneStats.value.unfilledCount--
-    }
+    row.difference = 0
+    row.status = 'MATCH'
+    row.filled = true
+    if (wasUnfilled) filledAdded++
   })
+  currentZoneStats.value.unfilledCount -= filledAdded
   ElMessage.success('已按系统库存填充本区所有实盘数量')
 }
 
 const handleClearZone = () => {
   if (!currentZoneStats.value) return
+  let filledRemoved = 0
   currentZoneStats.value.items.forEach((row) => {
+    const wasFilled = row.status !== 'UNFILLED'
     row.physicalQuantity = null
-    if (row.filled) {
-      row.filled = false
-      currentZoneStats.value.unfilledCount++
-    }
+    row.difference = null
+    row.status = 'UNFILLED'
+    row.filled = false
+    if (wasFilled) filledRemoved++
   })
+  currentZoneStats.value.unfilledCount += filledRemoved
   ElMessage.success('已清空本区所有实盘数量')
 }
 
@@ -429,14 +448,14 @@ const handleSubmitZone = () => {
 
 const confirmSubmit = async () => {
   const items = currentZoneStats.value.items
-    .filter(r => r.filled)
+    .filter(r => r.status && r.status !== 'UNFILLED')
     .map(r => ({
       accessoryId: r.id,
       accessoryName: r.name,
       categoryName: r.categoryName,
       systemQuantity: r.systemQuantity,
       physicalQuantity: r.physicalQuantity,
-      difference: getDiff(r)
+      difference: r.difference
     }))
 
   submitting.value = true

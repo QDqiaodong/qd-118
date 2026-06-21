@@ -113,6 +113,8 @@ public class TrunkSpecServiceImpl implements TrunkSpecService {
             item.setCategoryName(accessory.getCategoryName());
             item.setSystemQuantity(accessory.getStockQuantity());
             item.setPhysicalQuantity(null);
+            item.setDifference(null);
+            item.setStatus("UNFILLED");
             item.setUnit(accessory.getUnit());
             item.setFilled(false);
 

@@ -78,9 +78,9 @@
       </el-table-column>
       <el-table-column label="差异数量" width="120" align="center">
         <template #default="{ row }">
-          <span v-if="row.actualQuantity !== null && row.actualQuantity !== undefined">
-            <el-tag :type="diffTagType(row)" size="small">
-              {{ getDiff(row) > 0 ? '+' : '' }}{{ formatNumber(getDiff(row)) }}
+          <span v-if="row.status !== 'UNFILLED' && row.diff !== null && row.diff !== undefined">
+            <el-tag :type="getStatusTagType(row.status)" size="small">
+              {{ row.diff > 0 ? '+' : '' }}{{ formatNumber(row.diff) }}
             </el-tag>
           </span>
           <span v-else style="color: #c0c4cc">-</span>
@@ -88,13 +88,13 @@
       </el-table-column>
       <el-table-column label="差异状态" width="120" align="center">
         <template #default="{ row }">
-          <span v-if="row.actualQuantity === null || row.actualQuantity === undefined" style="color: #909399">
+          <span v-if="row.status === 'UNFILLED'" style="color: #909399">
             <el-icon><Warning /></el-icon> 未盘点
           </span>
-          <span v-else-if="getDiff(row) === 0" style="color: #67c23a">
+          <span v-else-if="row.status === 'MATCH'" style="color: #67c23a">
             <el-icon><CircleCheck /></el-icon> 账实相符
           </span>
-          <span v-else-if="getDiff(row) > 0" style="color: #f56c6c">
+          <span v-else-if="row.status === 'SURPLUS'" style="color: #f56c6c">
             <el-icon><Top /></el-icon> 盘盈
           </span>
           <span v-else style="color: #e6a23c">
@@ -171,23 +171,34 @@ const zoneTagType = (zone) => {
   return map[zone] || 'info'
 }
 
-const getDiff = (row) => {
-  if (row.actualQuantity === null || row.actualQuantity === undefined) return null
-  return row.actualQuantity - row.quantity
+const getStatusTagType = (status) => {
+  const map = { UNFILLED: 'info', MATCH: 'success', SURPLUS: 'danger', LOSS: 'warning' }
+  return map[status] || 'info'
 }
 
-const diffTagType = (row) => {
-  const diff = getDiff(row)
-  if (diff === null) return 'info'
-  if (diff === 0) return 'success'
-  if (diff > 0) return 'danger'
-  return 'warning'
+const recalcItemStatus = (row) => {
+  if (row.actualQuantity === null || row.actualQuantity === undefined) {
+    row.diff = null
+    row.status = 'UNFILLED'
+  } else {
+    const diff = row.actualQuantity - row.quantity
+    row.diff = diff
+    if (diff === 0) {
+      row.status = 'MATCH'
+    } else if (diff > 0) {
+      row.status = 'SURPLUS'
+    } else {
+      row.status = 'LOSS'
+    }
+  }
 }
 
-const onActualChange = () => {}
+const onActualChange = (row) => {
+  recalcItemStatus(row)
+}
 
 const hasAnyInput = computed(() => {
-  return dataList.value.some((r) => r.actualQuantity !== null && r.actualQuantity !== undefined)
+  return dataList.value.some((r) => r.status && r.status !== 'UNFILLED')
 })
 
 const totalSystem = computed(() => {
@@ -200,25 +211,25 @@ const totalActual = computed(() => {
 
 const totalDiff = computed(() => {
   return dataList.value.reduce((sum, r) => {
-    if (r.actualQuantity === null || r.actualQuantity === undefined) return sum
-    return sum + (r.actualQuantity - r.quantity)
+    if (r.status === 'UNFILLED' || r.diff === null || r.diff === undefined) return sum
+    return sum + r.diff
   }, 0)
 })
 
 const filledCount = computed(() => {
-  return dataList.value.filter((r) => r.actualQuantity !== null && r.actualQuantity !== undefined).length
+  return dataList.value.filter((r) => r.status && r.status !== 'UNFILLED').length
 })
 
 const matchCount = computed(() => {
-  return dataList.value.filter((r) => r.actualQuantity !== null && r.actualQuantity !== undefined && getDiff(r) === 0).length
+  return dataList.value.filter((r) => r.status === 'MATCH').length
 })
 
 const surplusCount = computed(() => {
-  return dataList.value.filter((r) => getDiff(r) !== null && getDiff(r) > 0).length
+  return dataList.value.filter((r) => r.status === 'SURPLUS').length
 })
 
 const lossCount = computed(() => {
-  return dataList.value.filter((r) => getDiff(r) !== null && getDiff(r) < 0).length
+  return dataList.value.filter((r) => r.status === 'LOSS').length
 })
 
 const filteredList = computed(() => {
@@ -235,13 +246,12 @@ const filteredList = computed(() => {
       ok = ok && item.zone === filterZone.value
     }
     if (filterStatus.value !== 'all') {
-      const diff = getDiff(item)
       if (filterStatus.value === 'diff') {
-        ok = ok && diff !== null && diff !== 0
+        ok = ok && item.status && item.status !== 'UNFILLED' && item.status !== 'MATCH'
       } else if (filterStatus.value === 'match') {
-        ok = ok && diff === 0
+        ok = ok && item.status === 'MATCH'
       } else if (filterStatus.value === 'unfilled') {
-        ok = ok && diff === null
+        ok = ok && item.status === 'UNFILLED'
       }
     }
     return ok
@@ -267,7 +277,9 @@ const loadData = async () => {
       const list = data.records || data.list || data || []
       dataList.value = list.map((item) => ({
         ...mapAccessoryFields(item),
-        actualQuantity: null
+        actualQuantity: null,
+        diff: null,
+        status: 'UNFILLED'
       }))
     }
   } catch (error) {
@@ -281,6 +293,8 @@ const loadData = async () => {
 const handleFillAll = () => {
   dataList.value.forEach((row) => {
     row.actualQuantity = row.quantity
+    row.diff = 0
+    row.status = 'MATCH'
   })
   ElMessage.success('已按系统库存填充全部实盘数量')
 }
@@ -288,6 +302,8 @@ const handleFillAll = () => {
 const handleClearAll = () => {
   dataList.value.forEach((row) => {
     row.actualQuantity = null
+    row.diff = null
+    row.status = 'UNFILLED'
   })
   ElMessage.success('已清空实盘数量')
 }
@@ -302,12 +318,12 @@ const handleSubmitInventory = () => {
 
 const confirmSubmit = async () => {
   const details = dataList.value
-    .filter((r) => r.actualQuantity !== null && r.actualQuantity !== undefined)
+    .filter((r) => r.status && r.status !== 'UNFILLED')
     .map((r) => ({
       accessoryId: r.id,
       systemQuantity: r.quantity,
       actualQuantity: r.actualQuantity,
-      diff: r.actualQuantity - r.quantity
+      diff: r.diff
     }))
 
   submitting.value = true
