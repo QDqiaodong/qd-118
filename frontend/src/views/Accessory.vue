@@ -147,6 +147,31 @@
             </el-form-item>
           </el-col>
         </el-row>
+        <el-row v-if="duplicateList && duplicateList.length" :gutter="16">
+          <el-col :span="24">
+            <el-alert
+              title="同分类下已存在相同型号的配件，请确认是否重复建档"
+              type="warning"
+              :closable="false"
+              show-icon
+            >
+              <template #default>
+                <el-table :data="duplicateList" size="small" border style="margin-top: 8px">
+                  <el-table-column prop="name" label="配件名称" min-width="160" />
+                  <el-table-column prop="model" label="型号" width="140" />
+                  <el-table-column prop="spec" label="规格" width="140" />
+                  <el-table-column label="库区" width="100" align="center">
+                    <template #default="{ row }">
+                      <el-tag :type="zoneTagType(row.warehouseZone || row.zone)" size="small">
+                        {{ row.warehouseZone || row.zone || '-' }}
+                      </el-tag>
+                    </template>
+                  </el-table-column>
+                </el-table>
+              </template>
+            </el-alert>
+          </el-col>
+        </el-row>
         <el-row :gutter="16">
           <el-col :span="12">
             <el-form-item label="单位" prop="unit">
@@ -202,6 +227,7 @@ const dialogTitle = ref('新增配件')
 const submitting = ref(false)
 const formRef = ref(null)
 const isEdit = ref(false)
+const duplicateList = ref([])
 
 const searchKeyword = ref('')
 const searchCategoryId = ref(null)
@@ -366,6 +392,7 @@ const resetForm = () => {
   formData.zone = ''
   formData.remark = ''
   isEdit.value = false
+  duplicateList.value = []
 }
 
 const loadCategoryTree = async () => {
@@ -444,7 +471,25 @@ const handleDelete = async (row) => {
     loadData()
   } catch (error) {
     console.error('删除失败:', error)
-    ElMessage.error('删除失败，请稍后重试')
+    if (error && error.code === 1006 && error.data) {
+      const { stockOutCount = 0, inventoryCheckCount = 0, scrapCount = 0 } = error.data
+      const total = (stockOutCount || 0) + (inventoryCheckCount || 0) + (scrapCount || 0)
+      const details = [
+        stockOutCount ? `出库记录 ${stockOutCount} 条` : '',
+        inventoryCheckCount ? `清点记录 ${inventoryCheckCount} 条` : '',
+        scrapCount ? `报废记录 ${scrapCount} 条` : ''
+      ].filter(Boolean).join('、')
+      ElMessageBox.alert(
+        `该配件存在 ${total} 条历史记录，无法物理删除。\n关联记录：${details}\n为避免弱电台账断链，请保留此档案。`,
+        '删除失败：存在关联历史记录',
+        {
+          confirmButtonText: '我知道了',
+          type: 'error'
+        }
+      ).catch(() => {})
+    } else if (!error || error.code !== 1006) {
+      ElMessage.error('删除失败，请稍后重试')
+    }
   }
 }
 
@@ -475,7 +520,14 @@ const handleSubmit = async () => {
       loadData()
     } catch (error) {
       console.error('提交失败:', error)
-      ElMessage.error(isEdit.value ? '修改失败，请稍后重试' : '新增失败，请稍后重试')
+      if (error && error.code === 1007 && error.data && Array.isArray(error.data)) {
+        duplicateList.value = error.data.map((item) => ({
+          ...item,
+          zone: item.warehouseZone ?? item.zone
+        }))
+      } else if (!error || error.code !== 1007) {
+        ElMessage.error(isEdit.value ? '修改失败，请稍后重试' : '新增失败，请稍后重试')
+      }
     } finally {
       submitting.value = false
     }

@@ -16,6 +16,8 @@ public interface ScrapRecordRepository extends JpaRepository<ScrapRecord, Long> 
 
     List<ScrapRecord> findByOperator(String operator);
 
+    long countByAccessoryId(Long accessoryId);
+
     @Query("SELECT COALESCE(SUM(s.quantity), 0) FROM ScrapRecord s WHERE s.scrapTime BETWEEN :start AND :end")
     Integer sumQuantityByScrapTimeBetween(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 

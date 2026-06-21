@@ -12,4 +12,6 @@ public interface InventoryCheckRepository extends JpaRepository<InventoryCheck, 
     List<InventoryCheck> findByAccessoryId(Long accessoryId);
 
     List<InventoryCheck> findByCheckPerson(String checkPerson);
+
+    long countByAccessoryId(Long accessoryId);
 }

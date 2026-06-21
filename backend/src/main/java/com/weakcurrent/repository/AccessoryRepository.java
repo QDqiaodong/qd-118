@@ -23,6 +23,10 @@ public interface AccessoryRepository extends JpaRepository<Accessory, Long> {
 
     List<Accessory> findByWarehouseZoneStartingWith(String zonePrefix);
 
+    List<Accessory> findByCategoryIdAndModelAndIdNot(Long categoryId, String model, Long excludeId);
+
+    List<Accessory> findByCategoryIdAndModel(Long categoryId, String model);
+
     @Query("SELECT COALESCE(SUM(a.stockQuantity), 0) FROM Accessory a")
     Integer sumAllStockQuantity();
 

@@ -16,6 +16,8 @@ public interface StockOutRepository extends JpaRepository<StockOut, Long> {
 
     List<StockOut> findByOperator(String operator);
 
+    long countByAccessoryId(Long accessoryId);
+
     @Query("SELECT COALESCE(SUM(s.quantity), 0) FROM StockOut s WHERE s.outTime BETWEEN :start AND :end")
     Integer sumQuantityByOutTimeBetween(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 }

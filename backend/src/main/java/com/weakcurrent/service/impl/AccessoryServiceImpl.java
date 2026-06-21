@@ -3,11 +3,16 @@ package com.weakcurrent.service.impl;
 import com.weakcurrent.common.BusinessException;
 import com.weakcurrent.common.ResultCode;
 import com.weakcurrent.dto.AccessoryCreateDTO;
+import com.weakcurrent.dto.AccessoryDuplicateDTO;
+import com.weakcurrent.dto.AccessoryRelatedRecordsDTO;
 import com.weakcurrent.dto.AccessoryUpdateDTO;
 import com.weakcurrent.entity.Accessory;
 import com.weakcurrent.entity.AccessoryCategory;
-import com.weakcurrent.repository.AccessoryRepository;
 import com.weakcurrent.repository.AccessoryCategoryRepository;
+import com.weakcurrent.repository.AccessoryRepository;
+import com.weakcurrent.repository.InventoryCheckRepository;
+import com.weakcurrent.repository.ScrapRecordRepository;
+import com.weakcurrent.repository.StockOutRepository;
 import com.weakcurrent.service.AccessoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -23,10 +29,15 @@ public class AccessoryServiceImpl implements AccessoryService {
 
     private final AccessoryRepository accessoryRepository;
     private final AccessoryCategoryRepository accessoryCategoryRepository;
+    private final StockOutRepository stockOutRepository;
+    private final InventoryCheckRepository inventoryCheckRepository;
+    private final ScrapRecordRepository scrapRecordRepository;
 
     @Override
     @Transactional
     public Accessory create(AccessoryCreateDTO dto) {
+        checkDuplicate(dto.getCategoryId(), dto.getModel(), null);
+
         Accessory accessory = new Accessory();
         accessory.setName(dto.getName());
         accessory.setModel(dto.getModel());
@@ -51,6 +62,8 @@ public class AccessoryServiceImpl implements AccessoryService {
     @Override
     @Transactional
     public Accessory update(AccessoryUpdateDTO dto) {
+        checkDuplicate(dto.getCategoryId(), dto.getModel(), dto.getId());
+
         Accessory accessory = accessoryRepository.findById(dto.getId())
                 .orElseThrow(() -> new BusinessException(ResultCode.DATA_NOT_FOUND));
 
@@ -74,13 +87,44 @@ public class AccessoryServiceImpl implements AccessoryService {
         return accessoryRepository.save(accessory);
     }
 
+    private void checkDuplicate(Long categoryId, String model, Long excludeId) {
+        if (model == null || model.trim().isEmpty()) {
+            return;
+        }
+        List<Accessory> duplicates;
+        if (excludeId != null) {
+            duplicates = accessoryRepository.findByCategoryIdAndModelAndIdNot(categoryId, model, excludeId);
+        } else {
+            duplicates = accessoryRepository.findByCategoryIdAndModel(categoryId, model);
+        }
+        if (!duplicates.isEmpty()) {
+            List<AccessoryDuplicateDTO> duplicateInfo = duplicates.stream()
+                    .map(a -> new AccessoryDuplicateDTO(a.getId(), a.getName(), a.getModel(), a.getSpec(), a.getWarehouseZone()))
+                    .collect(Collectors.toList());
+            throw new BusinessException(ResultCode.ACCESSORY_DUPLICATE_MODEL, duplicateInfo);
+        }
+    }
+
     @Override
     @Transactional
     public void delete(Long id) {
         if (!accessoryRepository.existsById(id)) {
             throw new BusinessException(ResultCode.DATA_NOT_FOUND);
         }
+
+        AccessoryRelatedRecordsDTO relatedRecords = checkRelatedRecords(id);
+        if (relatedRecords.getTotalCount() > 0) {
+            throw new BusinessException(ResultCode.ACCESSORY_HAS_RECORDS, relatedRecords);
+        }
+
         accessoryRepository.deleteById(id);
+    }
+
+    private AccessoryRelatedRecordsDTO checkRelatedRecords(Long accessoryId) {
+        int stockOutCount = (int) stockOutRepository.countByAccessoryId(accessoryId);
+        int inventoryCheckCount = (int) inventoryCheckRepository.countByAccessoryId(accessoryId);
+        int scrapCount = (int) scrapRecordRepository.countByAccessoryId(accessoryId);
+        return new AccessoryRelatedRecordsDTO(stockOutCount, inventoryCheckCount, scrapCount);
     }
 
     @Override

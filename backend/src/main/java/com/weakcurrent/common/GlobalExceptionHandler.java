@@ -21,9 +21,9 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(BusinessException.class)
     @ResponseStatus(HttpStatus.OK)
-    public Result<Void> handleBusinessException(BusinessException e) {
+    public Result<Object> handleBusinessException(BusinessException e) {
         log.warn("业务异常: {}", e.getMessage());
-        return Result.error(e.getCode(), e.getMessage());
+        return new Result<>(e.getCode(), e.getMessage(), e.getData());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

@@ -38,8 +38,15 @@ service.interceptors.response.use(
         })
         return Promise.reject(new Error(res.message || '认证失败'))
       } else {
-        ElMessage.error(res.message || '请求失败')
-        return Promise.reject(new Error(res.message || '请求失败'))
+        const silentCodes = [1006, 1007]
+        if (!silentCodes.includes(res.code)) {
+          ElMessage.error(res.message || '请求失败')
+        }
+        const err = new Error(res.message || '请求失败')
+        err.code = res.code
+        err.data = res.data
+        err.responseData = res
+        return Promise.reject(err)
       }
     }
     return res
