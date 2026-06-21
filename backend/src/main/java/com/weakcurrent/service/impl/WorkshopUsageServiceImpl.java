@@ -26,7 +26,7 @@ public class WorkshopUsageServiceImpl implements WorkshopUsageService {
         if (dto.getCode() != null && !dto.getCode().isEmpty()) {
             Optional<WorkshopUsage> existing = workshopUsageRepository.findByCode(dto.getCode());
             if (existing.isPresent()) {
-                throw new BusinessException(ResultCode.PARAM_ERROR, "用途编码已存在");
+                throw new BusinessException(ResultCode.BAD_REQUEST, "用途编码已存在");
             }
         }
 
@@ -49,7 +49,7 @@ public class WorkshopUsageServiceImpl implements WorkshopUsageService {
         if (dto.getCode() != null && !dto.getCode().isEmpty()) {
             Optional<WorkshopUsage> existing = workshopUsageRepository.findByCode(dto.getCode());
             if (existing.isPresent() && !existing.get().getId().equals(dto.getId())) {
-                throw new BusinessException(ResultCode.PARAM_ERROR, "用途编码已存在");
+                throw new BusinessException(ResultCode.BAD_REQUEST, "用途编码已存在");
             }
         }
 
