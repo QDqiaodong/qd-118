@@ -31,6 +31,9 @@ public class Accessory {
     @Column(name = "category_name", length = 100)
     private String categoryName;
 
+    @Column(name = "category_path", length = 500)
+    private String categoryPath;
+
     @Column(name = "stock_quantity", nullable = false)
     private Integer stockQuantity = 0;
 

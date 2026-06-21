@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS accessory (
     spec VARCHAR(100) COMMENT '规格',
     category_id BIGINT NOT NULL COMMENT '分类ID',
     category_name VARCHAR(100) COMMENT '分类名称',
+    category_path VARCHAR(500) COMMENT '分类完整路径，如接线端子/弹簧式接线端子',
     stock_quantity INT NOT NULL DEFAULT 0 COMMENT '库存数量',
     warehouse_zone VARCHAR(50) COMMENT '库区',
     unit VARCHAR(20) COMMENT '单位',
@@ -107,13 +108,13 @@ INSERT IGNORE INTO accessory_category (id, name, code, parent_id, sort, remark) 
 (12, '导轨卡扣', 'CLIP-RAIL', 3, 3, 'C45导轨安装卡扣');
 
 -- 初始化示例配件数据
-INSERT INTO accessory (name, model, spec, category_id, category_name, stock_quantity, warehouse_zone, unit) VALUES
-('UK接线端子', 'UK2.5B', '2.5mm²', 4, '螺钉式接线端子', 500, 'A区-01', '个'),
-('菲尼克斯接线端子', 'ST2.5', '2.5mm²', 5, '弹簧式接线端子', 300, 'A区-02', '个'),
-('插拔端子排', 'PCB-5P', '5Pin', 6, '插拔式接线端子', 200, 'A区-03', '条'),
-('PVC线槽', 'PVC-2515', '25*15mm', 7, 'PVC方形线槽', 150, 'B区-01', '米'),
-('镀锌桥架', 'QJ-10050', '100*50mm', 8, '金属桥架线槽', 80, 'B区-02', '米'),
-('塑料波纹管', 'PP-20', 'Φ20mm', 9, '圆形波纹管', 500, 'B区-03', '米'),
-('钢钉线卡', 'SK-8', 'Φ8mm', 10, '线卡卡扣', 1000, 'C区-01', '包'),
-('自锁式扎带', 'NT-3*150', '3*150mm', 11, '扎带卡扣', 2000, 'C区-02', '包'),
-('C45导轨卡扣', 'DK-1', '35mm导轨', 12, '导轨卡扣', 800, 'C区-03', '个');
+INSERT INTO accessory (name, model, spec, category_id, category_name, category_path, stock_quantity, warehouse_zone, unit) VALUES
+('UK接线端子', 'UK2.5B', '2.5mm²', 4, '螺钉式接线端子', '接线端子/螺钉式接线端子', 500, 'A区-01', '个'),
+('菲尼克斯接线端子', 'ST2.5', '2.5mm²', 5, '弹簧式接线端子', '接线端子/弹簧式接线端子', 300, 'A区-02', '个'),
+('插拔端子排', 'PCB-5P', '5Pin', 6, '插拔式接线端子', '接线端子/插拔式接线端子', 200, 'A区-03', '条'),
+('PVC线槽', 'PVC-2515', '25*15mm', 7, 'PVC方形线槽', '线槽/PVC方形线槽', 150, 'B区-01', '米'),
+('镀锌桥架', 'QJ-10050', '100*50mm', 8, '金属桥架线槽', '线槽/金属桥架线槽', 80, 'B区-02', '米'),
+('塑料波纹管', 'PP-20', 'Φ20mm', 9, '圆形波纹管', '线槽/圆形波纹管', 500, 'B区-03', '米'),
+('钢钉线卡', 'SK-8', 'Φ8mm', 10, '线卡卡扣', '固定卡扣/线卡卡扣', 1000, 'C区-01', '包'),
+('自锁式扎带', 'NT-3*150', '3*150mm', 11, '扎带卡扣', '固定卡扣/扎带卡扣', 2000, 'C区-02', '包'),
+('C45导轨卡扣', 'DK-1', '35mm导轨', 12, '导轨卡扣', '固定卡扣/导轨卡扣', 800, 'C区-03', '个');

@@ -13,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -31,13 +33,12 @@ public class AccessoryServiceImpl implements AccessoryService {
         accessory.setSpec(dto.getSpec());
         accessory.setCategoryId(dto.getCategoryId());
 
-        if (dto.getCategoryName() != null && !dto.getCategoryName().isEmpty()) {
+        AccessoryCategory category = accessoryCategoryRepository.findById(dto.getCategoryId()).orElse(null);
+        if (category != null) {
+            accessory.setCategoryName(category.getName());
+            accessory.setCategoryPath(buildCategoryPath(dto.getCategoryId()));
+        } else if (dto.getCategoryName() != null && !dto.getCategoryName().isEmpty()) {
             accessory.setCategoryName(dto.getCategoryName());
-        } else {
-            AccessoryCategory category = accessoryCategoryRepository.findById(dto.getCategoryId()).orElse(null);
-            if (category != null) {
-                accessory.setCategoryName(category.getName());
-            }
         }
 
         accessory.setStockQuantity(dto.getStockQuantity());
@@ -58,13 +59,12 @@ public class AccessoryServiceImpl implements AccessoryService {
         accessory.setSpec(dto.getSpec());
         accessory.setCategoryId(dto.getCategoryId());
 
-        if (dto.getCategoryName() != null && !dto.getCategoryName().isEmpty()) {
+        AccessoryCategory category = accessoryCategoryRepository.findById(dto.getCategoryId()).orElse(null);
+        if (category != null) {
+            accessory.setCategoryName(category.getName());
+            accessory.setCategoryPath(buildCategoryPath(dto.getCategoryId()));
+        } else if (dto.getCategoryName() != null && !dto.getCategoryName().isEmpty()) {
             accessory.setCategoryName(dto.getCategoryName());
-        } else {
-            AccessoryCategory category = accessoryCategoryRepository.findById(dto.getCategoryId()).orElse(null);
-            if (category != null) {
-                accessory.setCategoryName(category.getName());
-            }
         }
 
         accessory.setStockQuantity(dto.getStockQuantity());
@@ -126,5 +126,43 @@ public class AccessoryServiceImpl implements AccessoryService {
 
         accessory.setStockQuantity(accessory.getStockQuantity() + quantity);
         accessoryRepository.save(accessory);
+    }
+
+    @Override
+    public String buildCategoryPath(Long categoryId) {
+        if (categoryId == null || categoryId.equals(0L)) {
+            return "";
+        }
+        List<AccessoryCategory> allCategories = accessoryCategoryRepository.findAll();
+        List<String> pathNames = new ArrayList<>();
+        Long currentId = categoryId;
+        while (currentId != null && !currentId.equals(0L)) {
+            AccessoryCategory current = allCategories.stream()
+                    .filter(c -> c.getId().equals(currentId))
+                    .findFirst()
+                    .orElse(null);
+            if (current == null) {
+                break;
+            }
+            pathNames.add(current.getName());
+            currentId = current.getParentId();
+        }
+        Collections.reverse(pathNames);
+        return String.join("/", pathNames);
+    }
+
+    @Override
+    @Transactional
+    public void syncCategoryPath(Long categoryId, String categoryName, String categoryPath) {
+        accessoryRepository.updateCategoryInfoByCategoryId(categoryId, categoryName, categoryPath);
+    }
+
+    @Override
+    @Transactional
+    public void syncCategoryPathForDescendants(List<Long> categoryIds, String categoryName, String categoryPath) {
+        if (categoryIds == null || categoryIds.isEmpty()) {
+            return;
+        }
+        accessoryRepository.updateCategoryInfoByCategoryIds(categoryIds, categoryName, categoryPath);
     }
 }

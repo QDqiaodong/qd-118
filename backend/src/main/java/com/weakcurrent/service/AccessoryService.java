@@ -25,4 +25,10 @@ public interface AccessoryService {
     void deductStock(Long id, Integer quantity);
 
     void addStock(Long id, Integer quantity);
+
+    String buildCategoryPath(Long categoryId);
+
+    void syncCategoryPath(Long categoryId, String categoryName, String categoryPath);
+
+    void syncCategoryPathForDescendants(List<Long> categoryIds, String categoryName, String categoryPath);
 }

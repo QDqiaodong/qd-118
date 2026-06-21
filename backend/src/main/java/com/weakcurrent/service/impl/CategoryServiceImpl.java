@@ -11,6 +11,7 @@ import com.weakcurrent.entity.Accessory;
 import com.weakcurrent.entity.AccessoryCategory;
 import com.weakcurrent.repository.AccessoryCategoryRepository;
 import com.weakcurrent.repository.AccessoryRepository;
+import com.weakcurrent.service.AccessoryService;
 import com.weakcurrent.service.CategoryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +38,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     private final AccessoryCategoryRepository categoryRepository;
     private final AccessoryRepository accessoryRepository;
+    private final AccessoryService accessoryService;
     private final StringRedisTemplate stringRedisTemplate;
     private final ObjectMapper objectMapper;
 
@@ -70,6 +73,9 @@ public class CategoryServiceImpl implements CategoryService {
             }
         }
 
+        boolean nameOrParentChanged = !category.getName().equals(dto.getName())
+                || !category.getParentId().equals(dto.getParentId());
+
         category.setName(dto.getName());
         category.setCode(dto.getCode());
         category.setParentId(dto.getParentId());
@@ -78,6 +84,11 @@ public class CategoryServiceImpl implements CategoryService {
         category.setRemark(dto.getRemark());
 
         AccessoryCategory saved = categoryRepository.save(category);
+
+        if (nameOrParentChanged) {
+            syncCategoryPathsForDescendants(saved.getId());
+        }
+
         clearCache();
         return saved;
     }
@@ -169,6 +180,44 @@ public class CategoryServiceImpl implements CategoryService {
             return new ArrayList<>();
         }
         return accessoryRepository.findByCategoryIdIn(categoryIds);
+    }
+
+    private void syncCategoryPathsForDescendants(Long rootCategoryId) {
+        List<AccessoryCategory> allCategories = categoryRepository.findAllByOrderBySortAsc();
+        Set<Long> descendantIds = collectDescendantIds(rootCategoryId, allCategories);
+
+        for (Long categoryId : descendantIds) {
+            AccessoryCategory category = allCategories.stream()
+                    .filter(c -> c.getId().equals(categoryId))
+                    .findFirst()
+                    .orElse(null);
+            if (category == null) {
+                continue;
+            }
+            String categoryPath = buildCategoryPath(categoryId, allCategories);
+            accessoryService.syncCategoryPath(categoryId, category.getName(), categoryPath);
+        }
+    }
+
+    private String buildCategoryPath(Long categoryId, List<AccessoryCategory> allCategories) {
+        if (categoryId == null || categoryId.equals(0L)) {
+            return "";
+        }
+        List<String> pathNames = new ArrayList<>();
+        Long currentId = categoryId;
+        while (currentId != null && !currentId.equals(0L)) {
+            AccessoryCategory current = allCategories.stream()
+                    .filter(c -> c.getId().equals(currentId))
+                    .findFirst()
+                    .orElse(null);
+            if (current == null) {
+                break;
+            }
+            pathNames.add(current.getName());
+            currentId = current.getParentId();
+        }
+        Collections.reverse(pathNames);
+        return String.join("/", pathNames);
     }
 
     private Set<Long> collectDescendantIds(Long rootId, List<AccessoryCategory> allCategories) {

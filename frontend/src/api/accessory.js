@@ -1,10 +1,18 @@
 import request from '@/utils/request'
 
-const mapAccessoryFields = (item) => ({
-  ...item,
-  quantity: item.stockQuantity ?? item.quantity,
-  zone: item.warehouseZone ?? item.zone
-})
+const mapAccessoryFields = (item) => {
+  const mapped = {
+    ...item,
+    quantity: item.stockQuantity ?? item.quantity,
+    zone: item.warehouseZone ?? item.zone
+  }
+  if (typeof mapped.categoryPath === 'string' && mapped.categoryPath) {
+    mapped.categoryPath = mapped.categoryPath.split('/')
+  } else if (!mapped.categoryPath) {
+    mapped.categoryPath = []
+  }
+  return mapped
+}
 
 const mapAccessoryList = (data) => {
   if (!data) return data
