@@ -23,6 +23,10 @@
           <el-icon><Menu /></el-icon>
           <template #title>配件分类管理</template>
         </el-menu-item>
+        <el-menu-item index="/workshop-usage">
+          <el-icon><SetUp /></el-icon>
+          <template #title>领用用途字典</template>
+        </el-menu-item>
         <el-menu-item index="/category-tree">
           <el-icon><Share /></el-icon>
           <template #title>分类树维护台</template>

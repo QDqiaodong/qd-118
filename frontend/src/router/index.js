@@ -14,6 +14,12 @@ const routes = [
     meta: { title: '配件分类管理' }
   },
   {
+    path: '/workshop-usage',
+    name: 'WorkshopUsage',
+    component: () => import('@/views/WorkshopUsage.vue'),
+    meta: { title: '车间领用用途管理' }
+  },
+  {
     path: '/category-tree',
     name: 'CategoryTree',
     component: () => import('@/views/CategoryTree.vue'),

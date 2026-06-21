@@ -40,18 +40,35 @@ CREATE TABLE IF NOT EXISTS accessory (
     INDEX idx_name (name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='配件表';
 
+-- 车间领用用途字典表
+CREATE TABLE IF NOT EXISTS workshop_usage (
+    id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    name VARCHAR(100) NOT NULL COMMENT '用途名称',
+    code VARCHAR(32) COMMENT '用途编码',
+    sort INT NOT NULL DEFAULT 0 COMMENT '排序值',
+    enabled TINYINT(1) NOT NULL DEFAULT 1 COMMENT '启用状态：1启用 0停用',
+    remark VARCHAR(500) COMMENT '备注',
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_code (code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='车间领用用途字典表';
+
 -- 领用出库表
 CREATE TABLE IF NOT EXISTS stock_out (
     id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     accessory_id BIGINT NOT NULL COMMENT '配件ID',
     accessory_name VARCHAR(100) COMMENT '配件名称',
     workshop VARCHAR(100) COMMENT '领用车间',
+    usage_id BIGINT NOT NULL COMMENT '领用用途ID',
+    usage_name VARCHAR(100) COMMENT '领用用途名称',
     quantity INT NOT NULL COMMENT '出库数量',
     operator VARCHAR(50) COMMENT '操作人',
     out_time DATETIME NOT NULL COMMENT '出库时间',
     remark VARCHAR(500) COMMENT '备注',
     PRIMARY KEY (id),
     INDEX idx_accessory_id (accessory_id),
+    INDEX idx_usage_id (usage_id),
     INDEX idx_out_time (out_time)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='领用出库表';
 
@@ -118,3 +135,12 @@ INSERT INTO accessory (name, model, spec, category_id, category_name, category_p
 ('钢钉线卡', 'SK-8', 'Φ8mm', 10, '线卡卡扣', '固定卡扣/线卡卡扣', 1000, 'C区-01', '包'),
 ('自锁式扎带', 'NT-3*150', '3*150mm', 11, '扎带卡扣', '固定卡扣/扎带卡扣', 2000, 'C区-02', '包'),
 ('C45导轨卡扣', 'DK-1', '35mm导轨', 12, '导轨卡扣', '固定卡扣/导轨卡扣', 800, 'C区-03', '个');
+
+-- 初始化车间领用用途字典数据
+INSERT IGNORE INTO workshop_usage (id, name, code, sort, remark) VALUES
+(1, '设备改线', 'EQUIPMENT_REWIRING', 1, '车间设备接线改造、重新布线等场景'),
+(2, '网络维护', 'NETWORK_MAINTENANCE', 2, '网络线路维护、检修、故障排查等场景'),
+(3, '传感器更换', 'SENSOR_REPLACEMENT', 3, '各类传感器更换、安装、调试场景'),
+(4, '临时布线', 'TEMPORARY_WIRING', 4, '临时布线、临时接线等场景'),
+(5, '设备安装', 'EQUIPMENT_INSTALL', 5, '新设备安装、部署接线场景'),
+(6, '日常维修', 'DAILY_REPAIR', 6, '日常设备维修、配件更换场景');

@@ -72,6 +72,17 @@
           </el-select>
         </el-form-item>
 
+        <el-form-item label="领用用途" prop="usageId" style="width: 260px">
+          <el-select v-model="outForm.usageId" placeholder="请选择领用用途" style="width: 100%">
+            <el-option
+              v-for="item in usageList"
+              :key="item.id"
+              :value="item.id"
+              :label="item.name"
+            />
+          </el-select>
+        </el-form-item>
+
         <el-form-item label="领用数量" prop="quantity" style="width: 220px" :error="quantityError">
           <el-input-number
             ref="quantityInputRef"
@@ -127,6 +138,14 @@
               <el-option label="组装车间" value="组装车间" />
               <el-option label="调试车间" value="调试车间" />
             </el-select>
+            <el-select v-model="filterUsage" placeholder="筛选用途" clearable style="width: 180px">
+              <el-option
+                v-for="item in usageList"
+                :key="item.id"
+                :value="item.name"
+                :label="item.name"
+              />
+            </el-select>
           </div>
         </div>
       </template>
@@ -142,6 +161,7 @@
           </template>
         </el-table-column>
         <el-table-column prop="workshop" label="领用车间" width="120" align="center" />
+        <el-table-column prop="usageName" label="领用用途" width="140" align="center" show-overflow-tooltip />
         <el-table-column prop="operator" label="领用人" width="100" align="center" />
         <el-table-column label="领用时库存" width="120" align="center">
           <template #default="{ row }">
@@ -177,6 +197,7 @@ import { ref, reactive, computed, watch, onMounted, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getAccessoryList } from '@/api/accessory'
 import { getStockOutPage, createStockOut, deleteStockOut } from '@/api/stockout'
+import { getWorkshopUsageEnabled } from '@/api/workshopUsage'
 
 const historyLoading = ref(false)
 const submitting = ref(false)
@@ -184,8 +205,10 @@ const outFormRef = ref(null)
 const quantityInputRef = ref(null)
 
 const accessoryList = ref([])
+const usageList = ref([])
 const historyList = ref([])
 const filterWorkshop = ref('')
+const filterUsage = ref('')
 const historyPage = ref(1)
 const historyPageSize = ref(10)
 const quantityError = ref('')
@@ -193,6 +216,7 @@ const quantityError = ref('')
 const outForm = reactive({
   accessoryId: null,
   workshop: '',
+  usageId: null,
   quantity: 1,
   operator: ''
 })
@@ -203,6 +227,9 @@ const outFormRules = {
   ],
   workshop: [
     { required: true, message: '请选择领用车间', trigger: 'change' }
+  ],
+  usageId: [
+    { required: true, message: '请选择领用用途', trigger: 'change' }
   ],
   quantity: [
     { required: true, message: '请输入领用数量', trigger: 'blur' },
@@ -245,6 +272,9 @@ const filteredHistoryList = computed(() => {
   if (filterWorkshop.value) {
     list = list.filter((h) => h.workshop === filterWorkshop.value)
   }
+  if (filterUsage.value) {
+    list = list.filter((h) => h.usageName === filterUsage.value)
+  }
   return list
 })
 
@@ -254,7 +284,7 @@ const filteredHistory = computed(() => {
   return list.slice(start, start + historyPageSize.value)
 })
 
-watch(filterWorkshop, () => {
+watch([filterWorkshop, filterUsage], () => {
   historyPage.value = 1
 })
 
@@ -303,10 +333,22 @@ const handleAccessoryChange = () => {
 const resetOutForm = () => {
   outForm.accessoryId = null
   outForm.workshop = ''
+  outForm.usageId = null
   outForm.quantity = 1
   outForm.operator = ''
   quantityError.value = ''
   outFormRef.value?.resetFields()
+}
+
+const loadUsageList = async () => {
+  try {
+    const data = await getWorkshopUsageEnabled()
+    if (data && Array.isArray(data)) {
+      usageList.value = data
+    }
+  } catch (error) {
+    console.error('加载领用用途列表失败:', error)
+  }
 }
 
 const loadAccessoryList = async () => {
@@ -363,6 +405,7 @@ const handleOutSubmit = async () => {
       const payload = {
         accessoryId: outForm.accessoryId,
         workshop: outForm.workshop,
+        usageId: outForm.usageId,
         quantity: outForm.quantity,
         operator: outForm.operator
       }
@@ -403,6 +446,7 @@ const handleDeleteRecord = async (row) => {
 
 onMounted(() => {
   loadAccessoryList()
+  loadUsageList()
   loadHistory()
 })
 </script>

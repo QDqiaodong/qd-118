@@ -10,6 +10,8 @@ import com.weakcurrent.repository.StockOutRepository;
 import com.weakcurrent.service.AccessoryService;
 import com.weakcurrent.service.DashboardService;
 import com.weakcurrent.service.StockOutService;
+import com.weakcurrent.service.WorkshopUsageService;
+import com.weakcurrent.entity.WorkshopUsage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,11 +26,13 @@ public class StockOutServiceImpl implements StockOutService {
     private final StockOutRepository stockOutRepository;
     private final AccessoryService accessoryService;
     private final DashboardService dashboardService;
+    private final WorkshopUsageService workshopUsageService;
 
     @Override
     @Transactional
     public StockOut create(StockOutCreateDTO dto) {
         Accessory accessory = accessoryService.getById(dto.getAccessoryId());
+        WorkshopUsage usage = workshopUsageService.getById(dto.getUsageId());
 
         accessoryService.deductStock(dto.getAccessoryId(), dto.getQuantity());
 
@@ -37,6 +41,8 @@ public class StockOutServiceImpl implements StockOutService {
         stockOut.setAccessoryName(dto.getAccessoryName() != null && !dto.getAccessoryName().isEmpty()
                 ? dto.getAccessoryName() : accessory.getName());
         stockOut.setWorkshop(dto.getWorkshop());
+        stockOut.setUsageId(dto.getUsageId());
+        stockOut.setUsageName(usage.getName());
         stockOut.setQuantity(dto.getQuantity());
         stockOut.setOperator(dto.getOperator());
         stockOut.setOutTime(dto.getOutTime() != null ? dto.getOutTime() : LocalDateTime.now());
@@ -55,16 +61,15 @@ public class StockOutServiceImpl implements StockOutService {
                 .orElseThrow(() -> new BusinessException(ResultCode.DATA_NOT_FOUND));
 
         Accessory accessory = accessoryService.getById(dto.getAccessoryId());
+        WorkshopUsage usage = workshopUsageService.getById(dto.getUsageId());
 
         Long oldAccessoryId = stockOut.getAccessoryId();
         Integer oldQuantity = stockOut.getQuantity();
 
         if (!dto.getAccessoryId().equals(oldAccessoryId)) {
-            // 配件变更：先回滚原配件库存（恢复原出库数量），再按新数量扣减新配件库存
             accessoryService.addStock(oldAccessoryId, oldQuantity);
             accessoryService.deductStock(dto.getAccessoryId(), dto.getQuantity());
         } else {
-            // 配件未变更：按数量差异调整库存
             int quantityDiff = dto.getQuantity() - oldQuantity;
             if (quantityDiff > 0) {
                 accessoryService.deductStock(dto.getAccessoryId(), quantityDiff);
@@ -77,6 +82,8 @@ public class StockOutServiceImpl implements StockOutService {
         stockOut.setAccessoryName(dto.getAccessoryName() != null && !dto.getAccessoryName().isEmpty()
                 ? dto.getAccessoryName() : accessory.getName());
         stockOut.setWorkshop(dto.getWorkshop());
+        stockOut.setUsageId(dto.getUsageId());
+        stockOut.setUsageName(usage.getName());
         stockOut.setQuantity(dto.getQuantity());
         stockOut.setOperator(dto.getOperator());
         stockOut.setOutTime(dto.getOutTime());

@@ -23,6 +23,12 @@ public class StockOut {
     @Column(name = "workshop", length = 100)
     private String workshop;
 
+    @Column(name = "usage_id", nullable = false)
+    private Long usageId;
+
+    @Column(name = "usage_name", length = 100)
+    private String usageName;
+
     @Column(name = "quantity", nullable = false)
     private Integer quantity;
 
