@@ -29,6 +29,9 @@ public class InventoryCheck {
     @Column(name = "difference", nullable = false)
     private Integer difference;
 
+    @Column(name = "status", length = 20)
+    private String status;
+
     @Column(name = "check_person", length = 50)
     private String checkPerson;
 

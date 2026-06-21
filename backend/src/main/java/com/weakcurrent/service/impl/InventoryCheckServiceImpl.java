@@ -28,6 +28,16 @@ public class InventoryCheckServiceImpl implements InventoryCheckService {
     private final InventoryCheckRepository inventoryCheckRepository;
     private final AccessoryService accessoryService;
 
+    private String calculateStatus(int difference) {
+        if (difference > 0) {
+            return "SURPLUS";
+        } else if (difference < 0) {
+            return "LOSS";
+        } else {
+            return "MATCH";
+        }
+    }
+
     @Override
     @Transactional
     public InventoryCheck create(InventoryCheckCreateDTO dto) {
@@ -54,6 +64,7 @@ public class InventoryCheckServiceImpl implements InventoryCheckService {
         check.setPhysicalQuantity(dto.getPhysicalQuantity());
         check.setSystemQuantity(systemQuantity);
         check.setDifference(difference);
+        check.setStatus(calculateStatus(difference));
         check.setCheckPerson(dto.getCheckPerson());
         check.setCheckTime(dto.getCheckTime() != null ? dto.getCheckTime() : LocalDateTime.now());
         check.setRemark(dto.getRemark());
@@ -98,6 +109,7 @@ public class InventoryCheckServiceImpl implements InventoryCheckService {
             check.setPhysicalQuantity(physicalQuantity);
             check.setSystemQuantity(systemQuantity);
             check.setDifference(difference);
+            check.setStatus(calculateStatus(difference));
             check.setCheckPerson(dto.getCheckPerson());
             check.setCheckTime(checkTime);
             check.setRemark(dto.getRemark());
@@ -142,6 +154,7 @@ public class InventoryCheckServiceImpl implements InventoryCheckService {
             check.setPhysicalQuantity(physicalQuantity);
             check.setSystemQuantity(systemQuantity);
             check.setDifference(difference);
+            check.setStatus(calculateStatus(difference));
             check.setCheckPerson(dto.getCheckPerson());
             check.setCheckTime(checkTime);
 
@@ -196,6 +209,7 @@ public class InventoryCheckServiceImpl implements InventoryCheckService {
         check.setPhysicalQuantity(dto.getPhysicalQuantity());
         check.setSystemQuantity(newSystemQuantity);
         check.setDifference(newDifference);
+        check.setStatus(calculateStatus(newDifference));
         check.setCheckPerson(dto.getCheckPerson());
         check.setCheckTime(dto.getCheckTime());
         check.setRemark(dto.getRemark());
