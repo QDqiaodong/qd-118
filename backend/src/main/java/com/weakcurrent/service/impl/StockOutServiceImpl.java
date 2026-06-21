@@ -51,11 +51,21 @@ public class StockOutServiceImpl implements StockOutService {
 
         Accessory accessory = accessoryService.getById(dto.getAccessoryId());
 
-        int quantityDiff = dto.getQuantity() - stockOut.getQuantity();
-        if (quantityDiff > 0) {
-            accessoryService.deductStock(dto.getAccessoryId(), quantityDiff);
-        } else if (quantityDiff < 0) {
-            accessoryService.addStock(dto.getAccessoryId(), -quantityDiff);
+        Long oldAccessoryId = stockOut.getAccessoryId();
+        Integer oldQuantity = stockOut.getQuantity();
+
+        if (!dto.getAccessoryId().equals(oldAccessoryId)) {
+            // 配件变更：先回滚原配件库存（恢复原出库数量），再按新数量扣减新配件库存
+            accessoryService.addStock(oldAccessoryId, oldQuantity);
+            accessoryService.deductStock(dto.getAccessoryId(), dto.getQuantity());
+        } else {
+            // 配件未变更：按数量差异调整库存
+            int quantityDiff = dto.getQuantity() - oldQuantity;
+            if (quantityDiff > 0) {
+                accessoryService.deductStock(dto.getAccessoryId(), quantityDiff);
+            } else if (quantityDiff < 0) {
+                accessoryService.addStock(dto.getAccessoryId(), -quantityDiff);
+            }
         }
 
         stockOut.setAccessoryId(dto.getAccessoryId());

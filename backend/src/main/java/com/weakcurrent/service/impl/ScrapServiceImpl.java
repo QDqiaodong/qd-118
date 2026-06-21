@@ -131,15 +131,29 @@ public class ScrapServiceImpl implements ScrapService {
 
         Accessory accessory = accessoryService.getById(dto.getAccessoryId());
 
-        int quantityDiff = dto.getQuantity() - scrap.getQuantity();
-        if (quantityDiff > 0) {
-            if (accessory.getStockQuantity() < quantityDiff) {
+        Long oldAccessoryId = scrap.getAccessoryId();
+        Integer oldQuantity = scrap.getQuantity();
+
+        if (!dto.getAccessoryId().equals(oldAccessoryId)) {
+            // 配件变更：先回滚原配件库存（恢复原报废数量），再校验并按新数量扣减新配件库存
+            accessoryService.addStock(oldAccessoryId, oldQuantity);
+            if (accessory.getStockQuantity() < dto.getQuantity()) {
                 throw new BusinessException(ResultCode.BAD_REQUEST,
-                        "配件【" + accessory.getName() + "】增加报废数量 " + quantityDiff + " 超过库存 " + accessory.getStockQuantity());
+                        "配件【" + accessory.getName() + "】报废数量 " + dto.getQuantity() + " 超过库存 " + accessory.getStockQuantity());
             }
-            accessoryService.deductStock(dto.getAccessoryId(), quantityDiff);
-        } else if (quantityDiff < 0) {
-            accessoryService.addStock(dto.getAccessoryId(), -quantityDiff);
+            accessoryService.deductStock(dto.getAccessoryId(), dto.getQuantity());
+        } else {
+            // 配件未变更：按数量差异调整库存
+            int quantityDiff = dto.getQuantity() - oldQuantity;
+            if (quantityDiff > 0) {
+                if (accessory.getStockQuantity() < quantityDiff) {
+                    throw new BusinessException(ResultCode.BAD_REQUEST,
+                            "配件【" + accessory.getName() + "】增加报废数量 " + quantityDiff + " 超过库存 " + accessory.getStockQuantity());
+                }
+                accessoryService.deductStock(dto.getAccessoryId(), quantityDiff);
+            } else if (quantityDiff < 0) {
+                accessoryService.addStock(dto.getAccessoryId(), -quantityDiff);
+            }
         }
 
         scrap.setAccessoryId(dto.getAccessoryId());
