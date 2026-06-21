@@ -15,7 +15,9 @@ public enum ResultCode {
     INTERNAL_SERVER_ERROR(500, "服务器内部错误"),
     STOCK_INSUFFICIENT(1001, "库存不足"),
     DATA_NOT_FOUND(1002, "数据不存在"),
-    CATEGORY_CIRCULAR_REFERENCE(1003, "父级分类不能是自身或其子孙节点");
+    CATEGORY_CIRCULAR_REFERENCE(1003, "父级分类不能是自身或其子孙节点"),
+    CATEGORY_HAS_CHILDREN(1004, "该分类下存在子分类，请先删除子分类"),
+    CATEGORY_HAS_ACCESSORIES(1005, "该分类或其子分类下存在绑定的配件，请先删除或转移配件");
 
     private final Integer code;
     private final String message;

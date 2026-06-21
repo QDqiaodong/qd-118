@@ -181,16 +181,16 @@ const handleEdit = (row) => {
 }
 
 const handleDelete = async (row) => {
-  const hasChildren = row.children && row.children.length > 0
-  const msg = hasChildren
-    ? `确定要删除分类【${row.name}】及其所有子分类吗？`
-    : `确定要删除分类【${row.name}】吗？`
   try {
-    await ElMessageBox.confirm(msg, '删除确认', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning'
-    })
+    await ElMessageBox.confirm(
+      `确定要删除分类【${row.name}】吗？\n\n注意：存在子分类或绑定配件的分类无法删除。`,
+      '删除确认',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
   } catch {
     return
   }
@@ -200,7 +200,8 @@ const handleDelete = async (row) => {
     loadTree()
   } catch (error) {
     console.error('删除失败:', error)
-    ElMessage.error('删除失败，请稍后重试')
+    const errorMsg = error?.response?.data?.message || '删除失败，请稍后重试'
+    ElMessage.error(errorMsg)
   }
 }
 

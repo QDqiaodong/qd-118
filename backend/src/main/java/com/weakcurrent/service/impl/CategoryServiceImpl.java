@@ -96,9 +96,22 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     @Transactional
     public void delete(Long id) {
-        if (!categoryRepository.existsById(id)) {
-            throw new BusinessException(ResultCode.DATA_NOT_FOUND);
+        AccessoryCategory category = categoryRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(ResultCode.DATA_NOT_FOUND));
+
+        List<AccessoryCategory> allCategories = categoryRepository.findAllByOrderBySortAsc();
+        Set<Long> categoryIds = collectDescendantIds(id, allCategories);
+
+        List<AccessoryCategory> children = categoryRepository.findByParentId(id);
+        if (!children.isEmpty()) {
+            throw new BusinessException(ResultCode.CATEGORY_HAS_CHILDREN);
         }
+
+        List<Accessory> accessories = accessoryRepository.findByCategoryIdIn(categoryIds);
+        if (!accessories.isEmpty()) {
+            throw new BusinessException(ResultCode.CATEGORY_HAS_ACCESSORIES);
+        }
+
         categoryRepository.deleteById(id);
         clearCache();
     }
