@@ -41,6 +41,7 @@ public class AccessoryServiceImpl implements AccessoryService {
     @Override
     @Transactional
     public Accessory create(AccessoryCreateDTO dto) {
+        checkCategoryEnabled(dto.getCategoryId());
         checkDuplicate(dto.getCategoryId(), dto.getModel(), null);
 
         Accessory accessory = new Accessory();
@@ -72,6 +73,7 @@ public class AccessoryServiceImpl implements AccessoryService {
     @Override
     @Transactional
     public Accessory update(AccessoryUpdateDTO dto) {
+        checkCategoryEnabled(dto.getCategoryId());
         checkDuplicate(dto.getCategoryId(), dto.getModel(), dto.getId());
 
         Accessory accessory = accessoryRepository.findById(dto.getId())
@@ -117,6 +119,19 @@ public class AccessoryServiceImpl implements AccessoryService {
                     .map(a -> new AccessoryDuplicateDTO(a.getId(), a.getName(), a.getModel(), a.getSpec(), a.getWarehouseZone()))
                     .collect(Collectors.toList());
             throw new BusinessException(ResultCode.ACCESSORY_DUPLICATE_MODEL, duplicateInfo);
+        }
+    }
+
+    private void checkCategoryEnabled(Long categoryId) {
+        if (categoryId == null) {
+            return;
+        }
+        AccessoryCategory category = accessoryCategoryRepository.findById(categoryId).orElse(null);
+        if (category == null) {
+            throw new BusinessException(ResultCode.DATA_NOT_FOUND);
+        }
+        if (category.getEnabled() != null && !category.getEnabled()) {
+            throw new BusinessException(ResultCode.CATEGORY_DISABLED);
         }
     }
 

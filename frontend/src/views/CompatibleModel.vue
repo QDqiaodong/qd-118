@@ -329,15 +329,34 @@ const handleSubmit = async () => {
   if (!formRef.value) return
   await formRef.value.validate(async (valid) => {
     if (!valid) return
+
+    const trimmedBrand = (formData.brand || '').trim()
+    const trimmedModel = (formData.model || '').trim()
+    const trimmedGroupName = (formData.groupName || '').trim()
+
+    const duplicate = dataList.value.find((item) => {
+      if (isEdit.value && item.id === formData.id) return false
+      if (!item.groupName || item.groupName.trim() !== trimmedGroupName) return false
+      const itemBrand = (item.brand || '').trim().toLowerCase()
+      const itemModel = (item.model || '').trim().toLowerCase()
+      const inputBrand = trimmedBrand.toLowerCase()
+      const inputModel = trimmedModel.toLowerCase()
+      return itemBrand === inputBrand && itemModel === inputModel
+    })
+    if (duplicate) {
+      ElMessage.error('同兼容组内已存在相同品牌和型号的记录，请检查后重新输入')
+      return
+    }
+
     submitting.value = true
     try {
       const payload = {
-        groupName: formData.groupName,
-        brand: formData.brand,
-        model: formData.model,
-        spec: formData.spec,
+        groupName: trimmedGroupName,
+        brand: trimmedBrand,
+        model: trimmedModel,
+        spec: (formData.spec || '').trim(),
         accessoryId: formData.accessoryId,
-        remark: formData.remark
+        remark: (formData.remark || '').trim()
       }
       if (isEdit.value) {
         payload.id = formData.id
@@ -351,7 +370,11 @@ const handleSubmit = async () => {
       loadGroupNames()
     } catch (error) {
       console.error('提交失败:', error)
-      ElMessage.error(isEdit.value ? '修改失败，请稍后重试' : '新增失败，请稍后重试')
+      if (error && error.code === 1011) {
+        ElMessage.error(error.message || '同兼容组内已存在相同品牌和型号的记录')
+      } else {
+        ElMessage.error(isEdit.value ? '修改失败，请稍后重试' : '新增失败，请稍后重试')
+      }
     } finally {
       submitting.value = false
     }

@@ -120,8 +120,8 @@
             <el-form-item label="配件分类" prop="categoryId">
               <el-tree-select
                 v-model="formData.categoryId"
-                :data="categoryTree"
-                :props="{ label: 'name', value: 'id', children: 'children' }"
+                :data="selectableCategoryTree"
+                :props="{ label: 'name', value: 'id', children: 'children', disabled: (data) => data.enabled === false }"
                 placeholder="请选择配件分类"
                 style="width: 100%"
                 check-strictly
@@ -262,6 +262,7 @@ const pageSize = ref(10)
 
 const dataList = ref([])
 const categoryTree = ref([])
+const selectableCategoryTree = ref([])
 
 const compatibleDialogVisible = ref(false)
 const compatibleAccessoryName = ref('')
@@ -328,6 +329,35 @@ const findNodeById = (list, id) => {
     }
   }
   return null
+}
+
+const filterEnabledCategories = (list, preserveIds = new Set()) => {
+  if (!list || !Array.isArray(list)) return []
+  return list
+    .filter((node) => {
+      if (preserveIds.has(node.id)) return true
+      return node.enabled !== false
+    })
+    .map((node) => ({
+      ...node,
+      children: node.children ? filterEnabledCategories(node.children, preserveIds) : []
+    }))
+}
+
+const collectDescendantIds = (list, id, ids = new Set()) => {
+  for (const node of list) {
+    if (node.id === id) {
+      ids.add(node.id)
+      if (node.children) {
+        for (const child of node.children) {
+          collectDescendantIds([child], child.id, ids)
+        }
+      }
+    } else if (node.children) {
+      collectDescendantIds(node.children, id, ids)
+    }
+  }
+  return ids
 }
 
 const findNodePath = (list, id, path = []) => {
@@ -430,6 +460,7 @@ const loadCategoryTree = async () => {
     const data = await getCategoryTree()
     if (data && Array.isArray(data)) {
       categoryTree.value = data
+      selectableCategoryTree.value = filterEnabledCategories(data)
     }
   } catch (error) {
     console.error('加载分类树失败:', error)
@@ -465,6 +496,7 @@ const loadData = async () => {
 const handleAdd = () => {
   resetForm()
   dialogTitle.value = '新增配件'
+  selectableCategoryTree.value = filterEnabledCategories(categoryTree.value)
   dialogVisible.value = true
 }
 
@@ -482,6 +514,11 @@ const handleEdit = (row) => {
   formData.quantity = mapped.quantity
   formData.zone = mapped.zone
   formData.remark = mapped.remark || ''
+  const preserveIds = new Set()
+  if (mapped.categoryId) {
+    collectDescendantIds(categoryTree.value, mapped.categoryId, preserveIds)
+  }
+  selectableCategoryTree.value = filterEnabledCategories(categoryTree.value, preserveIds)
   dialogVisible.value = true
 }
 
