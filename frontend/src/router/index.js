@@ -68,6 +68,12 @@ const routes = [
     meta: { title: '老化配件报废归档' }
   },
   {
+    path: '/aging-pre-check',
+    name: 'AgingPreCheck',
+    component: () => import('@/views/AgingPreCheck.vue'),
+    meta: { title: '老化预检登记' }
+  },
+  {
     path: '/aging-batch',
     name: 'AgingBatch',
     component: () => import('@/views/AgingBatch.vue'),

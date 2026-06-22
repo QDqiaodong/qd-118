@@ -4,6 +4,7 @@ import com.weakcurrent.common.Result;
 import com.weakcurrent.dto.ScrapCreateBatchDTO;
 import com.weakcurrent.dto.ScrapCreateDTO;
 import com.weakcurrent.dto.ScrapUpdateDTO;
+import com.weakcurrent.entity.ScrapAttachment;
 import com.weakcurrent.entity.ScrapRecord;
 import com.weakcurrent.service.ScrapService;
 import jakarta.validation.Valid;
@@ -53,5 +54,10 @@ public class ScrapController {
     @GetMapping("/accessory/{accessoryId}")
     public Result<List<ScrapRecord>> listByAccessoryId(@PathVariable Long accessoryId) {
         return Result.success(scrapService.listByAccessoryId(accessoryId));
+    }
+
+    @GetMapping("/{id}/attachments")
+    public Result<List<ScrapAttachment>> getAttachments(@PathVariable Long id) {
+        return Result.success(scrapService.getAttachmentsByScrapId(id));
     }
 }

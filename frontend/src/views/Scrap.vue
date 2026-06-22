@@ -123,6 +123,34 @@
               <span v-else style="color: #c0c4cc">-</span>
             </template>
           </el-table-column>
+          <el-table-column label="老化附件" min-width="200" align="center">
+            <template #default="{ row, $index }">
+              <div>
+                <el-button
+                  type="primary"
+                  link
+                  size="small"
+                  :icon="Plus"
+                  @click="addAttachment(row)"
+                >
+                  添加附件
+                </el-button>
+                <div v-if="row.attachments && row.attachments.length > 0" style="margin-top: 4px">
+                  <el-tag
+                    v-for="(att, attIndex) in row.attachments"
+                    :key="attIndex"
+                    type="info"
+                    size="small"
+                    style="margin-right: 4px; margin-bottom: 4px"
+                    closable
+                    @close="removeAttachment(row, attIndex)"
+                  >
+                    {{ att.description || '附件' + (attIndex + 1) }}
+                  </el-tag>
+                </div>
+              </div>
+            </template>
+          </el-table-column>
           <el-table-column label="操作" width="70" align="center">
             <template #default="{ $index }">
               <el-button
@@ -232,6 +260,19 @@
         <el-table-column prop="operator" label="经办人" width="100" align="center" />
         <el-table-column prop="createTime" label="报废时间" width="170" align="center" />
         <el-table-column prop="remark" label="详细说明" min-width="160" show-overflow-tooltip />
+        <el-table-column label="附件" width="100" align="center">
+          <template #default="{ row }">
+            <el-button
+              type="primary"
+              link
+              size="small"
+              :icon="Picture"
+              @click="handleViewAttachments(row)"
+            >
+              查看
+            </el-button>
+          </template>
+        </el-table-column>
         <el-table-column label="操作" width="100" align="center" fixed="right">
           <template #default="{ row }">
             <el-button type="danger" link size="small" @click="handleDeleteRecord(row)">
@@ -252,15 +293,116 @@
         v-model:page-size="historyPageSize"
       />
     </el-card>
+
+    <el-dialog v-model="attachmentFormVisible" title="添加老化附件" width="500px" top="10vh">
+      <el-form :model="currentAttachmentForm" label-width="80px">
+        <el-form-item label="附件地址">
+          <el-input
+            v-model="currentAttachmentForm.fileUrl"
+            placeholder="请输入附件地址（图片/文档URL）"
+          />
+        </el-form-item>
+        <el-form-item label="文件名称">
+          <el-input
+            v-model="currentAttachmentForm.fileName"
+            placeholder="请输入文件名称（可选）"
+          />
+        </el-form-item>
+        <el-form-item label="文件类型">
+          <el-select v-model="currentAttachmentForm.fileType" style="width: 100%">
+            <el-option label="图片" value="image" />
+            <el-option label="文档" value="document" />
+            <el-option label="其他" value="other" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="附件说明">
+          <el-input
+            v-model="currentAttachmentForm.description"
+            type="textarea"
+            :rows="2"
+            placeholder="请输入附件说明（可选）"
+            maxlength="200"
+            show-word-limit
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="attachmentFormVisible = false">取消</el-button>
+        <el-button type="primary" @click="confirmAddAttachment">确认添加</el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model="attachmentDialogVisible" title="报废附件查看" width="700px" top="5vh">
+      <div v-if="currentScrapRecord" style="margin-bottom: 16px">
+        <el-descriptions :column="2" border size="small">
+          <el-descriptions-item label="配件名称">{{ currentScrapRecord.accessoryName }}</el-descriptions-item>
+          <el-descriptions-item label="型号">{{ currentScrapRecord.accessoryModel }}</el-descriptions-item>
+          <el-descriptions-item label="报废数量">{{ currentScrapRecord.quantity }} {{ currentScrapRecord.unit }}</el-descriptions-item>
+          <el-descriptions-item label="报废原因">{{ currentScrapRecord.reason }}</el-descriptions-item>
+          <el-descriptions-item label="经办人">{{ currentScrapRecord.operator }}</el-descriptions-item>
+          <el-descriptions-item label="报废时间">{{ currentScrapRecord.createTime }}</el-descriptions-item>
+        </el-descriptions>
+      </div>
+
+      <div v-if="currentAttachments.length === 0" style="text-align: center; padding: 40px; color: #909399">
+        暂无附件
+      </div>
+
+      <div v-else>
+        <div
+          v-for="(att, index) in currentAttachments"
+          :key="index"
+          style="margin-bottom: 16px; padding: 12px; border: 1px solid #ebeef5; border-radius: 8px"
+        >
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px">
+            <div style="display: flex; align-items: center; gap: 8px">
+              <el-icon :size="20" color="#409eff"><Picture /></el-icon>
+              <span style="font-weight: 600">{{ att.fileName || '附件' + (index + 1) }}</span>
+              <el-tag size="small">{{ att.fileType || '其他' }}</el-tag>
+            </div>
+            <el-button
+              type="primary"
+              link
+              size="small"
+              :icon="View"
+              @click="openAttachment(att)"
+            >
+              打开
+            </el-button>
+          </div>
+          <div v-if="att.description" style="color: #606266; font-size: 14px; margin-bottom: 8px">
+            说明：{{ att.description }}
+          </div>
+          <div style="color: #909399; font-size: 12px; word-break: break-all">
+            地址：{{ att.fileUrl }}
+          </div>
+          <div v-if="att.fileType === 'image' || att.fileUrl && (att.fileUrl.endsWith('.jpg') || att.fileUrl.endsWith('.jpeg') || att.fileUrl.endsWith('.png') || att.fileUrl.endsWith('.gif'))" style="margin-top: 8px">
+            <el-image
+              :src="att.fileUrl"
+              :preview-src-list="[att.fileUrl]"
+              style="width: 100px; height: 100px; object-fit: cover"
+              fit="cover"
+            />
+          </div>
+        </div>
+      </div>
+
+      <template #footer>
+        <el-button @click="attachmentDialogVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Delete } from '@element-plus/icons-vue'
+import { Plus, Delete, View, Picture } from '@element-plus/icons-vue'
 import { getAccessoryList } from '@/api/accessory'
-import { getScrapPage, createScrapBatch, deleteScrap } from '@/api/scrap'
+import { getScrapPage, createScrapBatch, deleteScrap, getScrapAttachments } from '@/api/scrap'
+
+const route = useRoute()
 
 const historyLoading = ref(false)
 const submitting = ref(false)
@@ -273,13 +415,28 @@ const filterReasonGroup = ref('')
 const historyPage = ref(1)
 const historyPageSize = ref(10)
 
+const attachmentDialogVisible = ref(false)
+const attachmentFormVisible = ref(false)
+const currentAttachments = ref([])
+const currentScrapRecord = ref(null)
+const currentAttachmentRow = ref(null)
+
+const currentAttachmentForm = reactive({
+  fileUrl: '',
+  fileName: '',
+  fileType: 'image',
+  description: ''
+})
+
 const scrapForm = reactive({
   items: [
     {
       accessoryId: null,
       quantity: 1,
       reason: '',
-      remark: ''
+      remark: '',
+      attachments: [],
+      agingPreCheckId: null
     }
   ],
   operator: '',
@@ -397,13 +554,26 @@ const reasonTagType = (reason) => {
   return map[reason] || 'info'
 }
 
-const addScrapItem = () => {
-  scrapForm.items.push({
+const addScrapItem = (preCheckItem = null) => {
+  const newItem = {
     accessoryId: null,
     quantity: 1,
     reason: '',
-    remark: ''
-  })
+    remark: '',
+    attachments: [],
+    agingPreCheckId: null
+  }
+
+  if (preCheckItem) {
+    newItem.accessoryId = preCheckItem.accessoryId
+    newItem.reason = '自然老化'
+    newItem.agingPreCheckId = preCheckItem.agingPreCheckId || null
+    if (preCheckItem.yellowingLevel !== undefined) {
+      newItem.remark = `发黄${preCheckItem.yellowingLevel}级/脆裂${preCheckItem.crackingLevel}级/氧化${preCheckItem.oxidationLevel}级，综合${preCheckItem.overallLevel}级`
+    }
+  }
+
+  scrapForm.items.push(newItem)
 }
 
 const removeScrapItem = (index) => {
@@ -412,6 +582,65 @@ const removeScrapItem = (index) => {
     return
   }
   scrapForm.items.splice(index, 1)
+}
+
+const addAttachment = (row) => {
+  currentAttachmentRow.value = row
+  currentAttachmentForm.fileUrl = ''
+  currentAttachmentForm.fileName = ''
+  currentAttachmentForm.fileType = 'image'
+  currentAttachmentForm.description = ''
+  attachmentFormVisible.value = true
+}
+
+const removeAttachment = (row, index) => {
+  if (!row.attachments) {
+    row.attachments = []
+  }
+  row.attachments.splice(index, 1)
+}
+
+const confirmAddAttachment = () => {
+  if (!currentAttachmentForm.fileUrl || !currentAttachmentForm.fileUrl.trim()) {
+    ElMessage.warning('请输入附件地址')
+    return
+  }
+
+  if (!currentAttachmentRow.value.attachments) {
+    currentAttachmentRow.value.attachments = []
+  }
+
+  currentAttachmentRow.value.attachments.push({
+    fileUrl: currentAttachmentForm.fileUrl,
+    fileName: currentAttachmentForm.fileName,
+    fileType: currentAttachmentForm.fileType,
+    description: currentAttachmentForm.description
+  })
+
+  attachmentFormVisible.value = false
+  ElMessage.success('附件添加成功')
+}
+
+const handleViewAttachments = async (row) => {
+  currentScrapRecord.value = row
+  currentAttachments.value = []
+  attachmentDialogVisible.value = true
+
+  try {
+    const data = await getScrapAttachments(row.id)
+    if (data) {
+      currentAttachments.value = data || []
+    }
+  } catch (error) {
+    console.error('加载附件失败:', error)
+    ElMessage.error('加载附件失败')
+  }
+}
+
+const openAttachment = (att) => {
+  if (att.fileUrl) {
+    window.open(att.fileUrl, '_blank')
+  }
 }
 
 const handleAccessoryChange = (row) => {
@@ -432,12 +661,37 @@ const resetScrapForm = () => {
       accessoryId: null,
       quantity: 1,
       reason: '',
-      remark: ''
+      remark: '',
+      attachments: [],
+      agingPreCheckId: null
     }
   ]
   scrapForm.operator = ''
   scrapForm.remark = ''
   scrapFormRef.value?.resetFields()
+}
+
+const loadFromPreCheck = () => {
+  if (route.query.fromPreCheck === 'true' && route.query.items) {
+    try {
+      const items = JSON.parse(route.query.items)
+      if (Array.isArray(items) && items.length > 0) {
+        scrapForm.items = items.map((item) => ({
+          accessoryId: item.accessoryId,
+          quantity: 1,
+          reason: '自然老化',
+          remark: item.yellowingLevel !== undefined
+            ? `发黄${item.yellowingLevel}级/脆裂${item.crackingLevel}级/氧化${item.oxidationLevel}级，综合${item.overallLevel}级`
+            : '',
+          attachments: [],
+          agingPreCheckId: item.agingPreCheckId || null
+        }))
+        ElMessage.info(`已从老化预检导入 ${items.length} 项待报废配件`)
+      }
+    } catch (error) {
+      console.error('解析预检数据失败:', error)
+    }
+  }
 }
 
 const mapAccessoryFields = (item) => ({
@@ -558,6 +812,14 @@ const handleScrapSubmit = async () => {
     try {
       const items = scrapForm.items.map((item) => {
         const acc = getRowAccessory(item)
+        const attachments = (item.attachments || [])
+          .filter((att) => att.fileUrl && att.fileUrl.trim())
+          .map((att) => ({
+            fileUrl: att.fileUrl,
+            fileName: att.fileName,
+            fileType: att.fileType,
+            description: att.description
+          }))
         return {
           accessoryId: item.accessoryId,
           accessoryName: acc ? acc.name : '',
@@ -565,7 +827,9 @@ const handleScrapSubmit = async () => {
           quantity: item.quantity,
           reason: item.reason,
           reasonGroup: getReasonGroup(item.reason),
-          remark: item.remark
+          remark: item.remark,
+          agingPreCheckId: item.agingPreCheckId,
+          attachments: attachments.length > 0 ? attachments : undefined
         }
       })
 
@@ -612,5 +876,6 @@ const handleDeleteRecord = async (row) => {
 onMounted(() => {
   loadAccessoryList()
   loadHistory()
+  loadFromPreCheck()
 })
 </script>

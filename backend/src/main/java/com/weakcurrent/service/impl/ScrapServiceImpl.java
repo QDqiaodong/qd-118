@@ -2,12 +2,17 @@ package com.weakcurrent.service.impl;
 
 import com.weakcurrent.common.BusinessException;
 import com.weakcurrent.common.ResultCode;
+import com.weakcurrent.dto.ScrapAttachmentDTO;
 import com.weakcurrent.dto.ScrapCreateBatchDTO;
 import com.weakcurrent.dto.ScrapCreateDTO;
 import com.weakcurrent.dto.ScrapItemDTO;
 import com.weakcurrent.dto.ScrapUpdateDTO;
 import com.weakcurrent.entity.Accessory;
+import com.weakcurrent.entity.AgingPreCheck;
+import com.weakcurrent.entity.ScrapAttachment;
 import com.weakcurrent.entity.ScrapRecord;
+import com.weakcurrent.repository.AgingPreCheckRepository;
+import com.weakcurrent.repository.ScrapAttachmentRepository;
 import com.weakcurrent.repository.ScrapRecordRepository;
 import com.weakcurrent.service.AccessoryService;
 import com.weakcurrent.service.DashboardService;
@@ -27,6 +32,8 @@ import java.util.Map;
 public class ScrapServiceImpl implements ScrapService {
 
     private final ScrapRecordRepository scrapRecordRepository;
+    private final ScrapAttachmentRepository scrapAttachmentRepository;
+    private final AgingPreCheckRepository agingPreCheckRepository;
     private final AccessoryService accessoryService;
     private final DashboardService dashboardService;
 
@@ -55,6 +62,26 @@ public class ScrapServiceImpl implements ScrapService {
         scrap.setRemark(dto.getRemark());
 
         ScrapRecord saved = scrapRecordRepository.save(scrap);
+
+        if (dto.getAttachments() != null && !dto.getAttachments().isEmpty()) {
+            for (ScrapAttachmentDTO attDto : dto.getAttachments()) {
+                ScrapAttachment attachment = new ScrapAttachment();
+                attachment.setScrapRecordId(saved.getId());
+                attachment.setFileUrl(attDto.getFileUrl());
+                attachment.setFileName(attDto.getFileName());
+                attachment.setFileType(attDto.getFileType());
+                attachment.setDescription(attDto.getDescription());
+                scrapAttachmentRepository.save(attachment);
+            }
+        }
+
+        if (dto.getAgingPreCheckId() != null) {
+            agingPreCheckRepository.findById(dto.getAgingPreCheckId()).ifPresent(preCheck -> {
+                preCheck.setScrapRecordId(saved.getId());
+                agingPreCheckRepository.save(preCheck);
+            });
+        }
+
         dashboardService.evictMonthScrap();
         dashboardService.evictInventoryOverview();
         return saved;
@@ -122,7 +149,28 @@ public class ScrapServiceImpl implements ScrapService {
             }
             scrap.setRemark(remarkBuilder.length() > 0 ? remarkBuilder.toString() : null);
 
-            records.add(scrapRecordRepository.save(scrap));
+            ScrapRecord saved = scrapRecordRepository.save(scrap);
+
+            if (item.getAttachments() != null && !item.getAttachments().isEmpty()) {
+                for (ScrapAttachmentDTO attDto : item.getAttachments()) {
+                    ScrapAttachment attachment = new ScrapAttachment();
+                    attachment.setScrapRecordId(saved.getId());
+                    attachment.setFileUrl(attDto.getFileUrl());
+                    attachment.setFileName(attDto.getFileName());
+                    attachment.setFileType(attDto.getFileType());
+                    attachment.setDescription(attDto.getDescription());
+                    scrapAttachmentRepository.save(attachment);
+                }
+            }
+
+            if (item.getAgingPreCheckId() != null) {
+                agingPreCheckRepository.findById(item.getAgingPreCheckId()).ifPresent(preCheck -> {
+                    preCheck.setScrapRecordId(saved.getId());
+                    agingPreCheckRepository.save(preCheck);
+                });
+            }
+
+            records.add(saved);
         }
 
         dashboardService.evictMonthScrap();
@@ -175,6 +223,20 @@ public class ScrapServiceImpl implements ScrapService {
         scrap.setRemark(dto.getRemark());
 
         ScrapRecord saved = scrapRecordRepository.save(scrap);
+
+        scrapAttachmentRepository.deleteByScrapRecordId(saved.getId());
+        if (dto.getAttachments() != null && !dto.getAttachments().isEmpty()) {
+            for (ScrapAttachmentDTO attDto : dto.getAttachments()) {
+                ScrapAttachment attachment = new ScrapAttachment();
+                attachment.setScrapRecordId(saved.getId());
+                attachment.setFileUrl(attDto.getFileUrl());
+                attachment.setFileName(attDto.getFileName());
+                attachment.setFileType(attDto.getFileType());
+                attachment.setDescription(attDto.getDescription());
+                scrapAttachmentRepository.save(attachment);
+            }
+        }
+
         dashboardService.evictMonthScrap();
         dashboardService.evictInventoryOverview();
         return saved;
@@ -188,6 +250,7 @@ public class ScrapServiceImpl implements ScrapService {
 
         accessoryService.addStock(scrap.getAccessoryId(), scrap.getQuantity());
 
+        scrapAttachmentRepository.deleteByScrapRecordId(id);
         scrapRecordRepository.deleteById(id);
         dashboardService.evictMonthScrap();
         dashboardService.evictInventoryOverview();
@@ -207,5 +270,13 @@ public class ScrapServiceImpl implements ScrapService {
     @Override
     public List<ScrapRecord> listByAccessoryId(Long accessoryId) {
         return scrapRecordRepository.findByAccessoryId(accessoryId);
+    }
+
+    @Override
+    public List<ScrapAttachment> getAttachmentsByScrapId(Long scrapId) {
+        if (!scrapRecordRepository.existsById(scrapId)) {
+            throw new BusinessException(ResultCode.DATA_NOT_FOUND);
+        }
+        return scrapAttachmentRepository.findByScrapRecordId(scrapId);
     }
 }

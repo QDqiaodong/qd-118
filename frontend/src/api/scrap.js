@@ -16,6 +16,20 @@ export function getScrapList(params) {
   })
 }
 
+export function getScrapById(id) {
+  return request({
+    url: `/scrap-records/${id}`,
+    method: 'get'
+  })
+}
+
+export function getScrapAttachments(id) {
+  return request({
+    url: `/scrap-records/${id}/attachments`,
+    method: 'get'
+  })
+}
+
 export function createScrap(data) {
   return request({
     url: '/scrap-records',
@@ -28,6 +42,14 @@ export function createScrapBatch(data) {
   return request({
     url: '/scrap-records/batch',
     method: 'post',
+    data
+  })
+}
+
+export function updateScrap(data) {
+  return request({
+    url: '/scrap-records',
+    method: 'put',
     data
   })
 }

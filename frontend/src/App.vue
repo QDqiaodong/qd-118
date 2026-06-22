@@ -55,6 +55,10 @@
           <el-icon><Collection /></el-icon>
           <template #title>线槽规格对照</template>
         </el-menu-item>
+        <el-menu-item index="/aging-pre-check">
+          <el-icon><Search /></el-icon>
+          <template #title>老化预检登记</template>
+        </el-menu-item>
         <el-menu-item index="/scrap">
           <el-icon><Delete /></el-icon>
           <template #title>报废归档</template>

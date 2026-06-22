@@ -1,9 +1,12 @@
 package com.weakcurrent.dto;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
+
+import java.util.List;
 
 @Data
 public class ScrapItemDTO {
@@ -25,4 +28,9 @@ public class ScrapItemDTO {
     private String reasonGroup;
 
     private String remark;
+
+    private Long agingPreCheckId;
+
+    @Valid
+    private List<ScrapAttachmentDTO> attachments;
 }

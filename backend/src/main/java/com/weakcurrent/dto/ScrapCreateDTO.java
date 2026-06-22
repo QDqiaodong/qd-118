@@ -1,11 +1,13 @@
 package com.weakcurrent.dto;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 public class ScrapCreateDTO {
@@ -28,4 +30,9 @@ public class ScrapCreateDTO {
     private LocalDateTime scrapTime;
 
     private String remark;
+
+    private Long agingPreCheckId;
+
+    @Valid
+    private List<ScrapAttachmentDTO> attachments;
 }
