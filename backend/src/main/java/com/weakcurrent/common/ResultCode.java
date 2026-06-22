@@ -23,7 +23,8 @@ public enum ResultCode {
     DATA_DUPLICATE(1008, "数据已存在，不可重复"),
     DATA_IN_USE(1009, "数据正在使用中，无法删除"),
     CATEGORY_DISABLED(1010, "所选分类已停用，无法绑定档案"),
-    COMPATIBLE_MODEL_DUPLICATE(1011, "同兼容组内已存在相同品牌和型号的记录");
+    COMPATIBLE_MODEL_DUPLICATE(1011, "同兼容组内已存在相同品牌和型号的记录"),
+    STOCK_DEDUCT_CONFLICT(1012, "库存扣减冲突，请刷新后重试");
 
     private final Integer code;
     private final String message;

@@ -6,6 +6,7 @@ import com.weakcurrent.dto.StockOutCreateDTO;
 import com.weakcurrent.dto.StockOutUpdateDTO;
 import com.weakcurrent.entity.Accessory;
 import com.weakcurrent.entity.StockOut;
+import com.weakcurrent.repository.AccessoryRepository;
 import com.weakcurrent.repository.StockOutRepository;
 import com.weakcurrent.service.AccessoryService;
 import com.weakcurrent.service.DashboardService;
@@ -13,6 +14,7 @@ import com.weakcurrent.service.StockOutService;
 import com.weakcurrent.service.WorkshopUsageService;
 import com.weakcurrent.entity.WorkshopUsage;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +26,7 @@ import java.util.List;
 public class StockOutServiceImpl implements StockOutService {
 
     private final StockOutRepository stockOutRepository;
+    private final AccessoryRepository accessoryRepository;
     private final AccessoryService accessoryService;
     private final DashboardService dashboardService;
     private final WorkshopUsageService workshopUsageService;
@@ -34,7 +37,13 @@ public class StockOutServiceImpl implements StockOutService {
         Accessory accessory = accessoryService.getById(dto.getAccessoryId());
         WorkshopUsage usage = workshopUsageService.getById(dto.getUsageId());
 
-        accessoryService.deductStock(dto.getAccessoryId(), dto.getQuantity());
+        try {
+            accessoryService.deductStock(dto.getAccessoryId(), dto.getQuantity());
+        } catch (PessimisticLockingFailureException e) {
+            throw new BusinessException(ResultCode.STOCK_DEDUCT_CONFLICT,
+                    "车间【" + dto.getWorkshop() + "】领用配件【" + accessory.getName()
+                            + "】时发生并发冲突，请刷新库存后重试");
+        }
 
         StockOut stockOut = new StockOut();
         stockOut.setAccessoryId(dto.getAccessoryId());
@@ -69,16 +78,21 @@ public class StockOutServiceImpl implements StockOutService {
         Long oldAccessoryId = stockOut.getAccessoryId();
         Integer oldQuantity = stockOut.getQuantity();
 
-        if (!dto.getAccessoryId().equals(oldAccessoryId)) {
-            accessoryService.addStock(oldAccessoryId, oldQuantity);
-            accessoryService.deductStock(dto.getAccessoryId(), dto.getQuantity());
-        } else {
-            int quantityDiff = dto.getQuantity() - oldQuantity;
-            if (quantityDiff > 0) {
-                accessoryService.deductStock(dto.getAccessoryId(), quantityDiff);
-            } else if (quantityDiff < 0) {
-                accessoryService.addStock(dto.getAccessoryId(), -quantityDiff);
+        try {
+            if (!dto.getAccessoryId().equals(oldAccessoryId)) {
+                accessoryService.addStock(oldAccessoryId, oldQuantity);
+                accessoryService.deductStock(dto.getAccessoryId(), dto.getQuantity());
+            } else {
+                int quantityDiff = dto.getQuantity() - oldQuantity;
+                if (quantityDiff > 0) {
+                    accessoryService.deductStock(dto.getAccessoryId(), quantityDiff);
+                } else if (quantityDiff < 0) {
+                    accessoryService.addStock(dto.getAccessoryId(), -quantityDiff);
+                }
             }
+        } catch (PessimisticLockingFailureException e) {
+            throw new BusinessException(ResultCode.STOCK_DEDUCT_CONFLICT,
+                    "修改出库记录时配件【" + accessory.getName() + "】库存扣减发生并发冲突，请刷新库存后重试");
         }
 
         stockOut.setAccessoryId(dto.getAccessoryId());

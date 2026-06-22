@@ -2,6 +2,7 @@ package com.weakcurrent.common;
 
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
@@ -82,6 +83,13 @@ public class GlobalExceptionHandler {
     public Result<Void> handleIllegalArgumentException(IllegalArgumentException e) {
         log.warn("非法参数异常: {}", e.getMessage());
         return Result.error(ResultCode.BAD_REQUEST, e.getMessage());
+    }
+
+    @ExceptionHandler(PessimisticLockingFailureException.class)
+    @ResponseStatus(HttpStatus.OK)
+    public Result<Object> handlePessimisticLockingFailureException(PessimisticLockingFailureException e) {
+        log.warn("库存扣减并发冲突: {}", e.getMessage());
+        return Result.error(ResultCode.STOCK_DEDUCT_CONFLICT);
     }
 
     @ExceptionHandler(Exception.class)

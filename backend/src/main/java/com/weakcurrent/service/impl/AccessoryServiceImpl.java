@@ -181,11 +181,13 @@ public class AccessoryServiceImpl implements AccessoryService {
     @Override
     @Transactional
     public void deductStock(Long id, Integer quantity) {
-        Accessory accessory = accessoryRepository.findById(id)
+        Accessory accessory = accessoryRepository.findByIdForUpdate(id)
                 .orElseThrow(() -> new BusinessException(ResultCode.DATA_NOT_FOUND));
 
         if (accessory.getStockQuantity() < quantity) {
-            throw new BusinessException(ResultCode.STOCK_INSUFFICIENT);
+            throw new BusinessException(ResultCode.STOCK_INSUFFICIENT,
+                    "配件【" + accessory.getName() + "】库存不足，当前库存：" + accessory.getStockQuantity()
+                            + "，需扣减数量：" + quantity);
         }
 
         accessory.setStockQuantity(accessory.getStockQuantity() - quantity);
@@ -195,7 +197,7 @@ public class AccessoryServiceImpl implements AccessoryService {
     @Override
     @Transactional
     public void addStock(Long id, Integer quantity) {
-        Accessory accessory = accessoryRepository.findById(id)
+        Accessory accessory = accessoryRepository.findByIdForUpdate(id)
                 .orElseThrow(() -> new BusinessException(ResultCode.DATA_NOT_FOUND));
 
         accessory.setStockQuantity(accessory.getStockQuantity() + quantity);
