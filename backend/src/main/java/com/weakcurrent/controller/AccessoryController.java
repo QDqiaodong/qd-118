@@ -6,7 +6,9 @@ import com.weakcurrent.dto.AccessorySpecTemplateDTO;
 import com.weakcurrent.dto.AccessoryUpdateDTO;
 import com.weakcurrent.dto.AccessoryWithLatestCheckDTO;
 import com.weakcurrent.entity.Accessory;
+import com.weakcurrent.entity.CompatibleModelGroup;
 import com.weakcurrent.service.AccessoryService;
+import com.weakcurrent.service.CompatibleModelGroupService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -19,6 +21,7 @@ import java.util.List;
 public class AccessoryController {
 
     private final AccessoryService accessoryService;
+    private final CompatibleModelGroupService compatibleModelGroupService;
 
     @PostMapping
     public Result<Accessory> create(@Valid @RequestBody AccessoryCreateDTO dto) {
@@ -81,5 +84,15 @@ public class AccessoryController {
     @GetMapping("/spec-template/{categoryCode}")
     public Result<AccessorySpecTemplateDTO> getSpecTemplateByCategoryCode(@PathVariable String categoryCode) {
         return Result.success(accessoryService.getSpecTemplateByCategoryCode(categoryCode));
+    }
+
+    @GetMapping("/{id}/compatible-group")
+    public Result<List<CompatibleModelGroup>> getCompatibleGroup(@PathVariable Long id) {
+        return Result.success(compatibleModelGroupService.listByAccessoryId(id));
+    }
+
+    @GetMapping("/by-model/compatible")
+    public Result<List<CompatibleModelGroup>> getCompatibleByModel(@RequestParam String model) {
+        return Result.success(compatibleModelGroupService.listByModel(model));
     }
 }

@@ -67,6 +67,14 @@
           <el-icon><Grid /></el-icon>
           <template #title>货位图</template>
         </el-menu-item>
+        <el-menu-item index="/compatible-model">
+          <el-icon><Connection /></el-icon>
+          <template #title>兼容型号库</template>
+        </el-menu-item>
+        <el-menu-item index="/duct-offcut">
+          <el-icon><Scissor /></el-icon>
+          <template #title>线槽余料管理</template>
+        </el-menu-item>
       </el-menu>
     </el-aside>
 

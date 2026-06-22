@@ -74,11 +74,15 @@
           <span>{{ row.createTime || '-' }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="180" align="center" fixed="right">
+      <el-table-column label="操作" width="250" align="center" fixed="right">
         <template #default="{ row }">
           <el-button type="primary" link @click="handleEdit(row)">
             <el-icon><Edit /></el-icon>
             <span class="ml-8">编辑</span>
+          </el-button>
+          <el-button type="success" link @click="handleViewCompatible(row)">
+            <el-icon><Connection /></el-icon>
+            <span class="ml-8">兼容组</span>
           </el-button>
           <el-button type="danger" link @click="handleDelete(row)">
             <el-icon><Delete /></el-icon>
@@ -211,6 +215,26 @@
         </div>
       </template>
     </el-dialog>
+
+    <el-dialog
+      v-model="compatibleDialogVisible"
+      :title="`兼容型号 - ${compatibleAccessoryName}`"
+      width="700px"
+      destroy-on-close
+    >
+      <el-table :data="compatibleList" border stripe size="small" v-loading="compatibleLoading">
+        <el-table-column prop="groupName" label="兼容组" width="160">
+          <template #default="{ row }">
+            <el-tag type="primary" effect="plain" size="small">{{ row.groupName }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="brand" label="品牌" width="140" />
+        <el-table-column prop="model" label="型号" width="160" />
+        <el-table-column prop="spec" label="规格" width="140" />
+        <el-table-column prop="remark" label="备注" min-width="160" show-overflow-tooltip />
+      </el-table>
+      <el-empty v-if="!compatibleLoading && compatibleList.length === 0" description="暂无兼容型号数据" />
+    </el-dialog>
   </div>
 </template>
 
@@ -220,6 +244,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search } from '@element-plus/icons-vue'
 import { getAccessoryPage, addAccessory, updateAccessory, deleteAccessory } from '@/api/accessory'
 import { getCategoryTree } from '@/api/category'
+import { getAccessoryCompatibleGroup } from '@/api/compatibleModel'
 
 const loading = ref(false)
 const dialogVisible = ref(false)
@@ -237,6 +262,11 @@ const pageSize = ref(10)
 
 const dataList = ref([])
 const categoryTree = ref([])
+
+const compatibleDialogVisible = ref(false)
+const compatibleAccessoryName = ref('')
+const compatibleList = ref([])
+const compatibleLoading = ref(false)
 
 const formData = reactive({
   id: null,
@@ -453,6 +483,23 @@ const handleEdit = (row) => {
   formData.zone = mapped.zone
   formData.remark = mapped.remark || ''
   dialogVisible.value = true
+}
+
+const handleViewCompatible = async (row) => {
+  compatibleAccessoryName.value = row.name || ''
+  compatibleList.value = []
+  compatibleDialogVisible.value = true
+  compatibleLoading.value = true
+  try {
+    const data = await getAccessoryCompatibleGroup(row.id)
+    if (data && Array.isArray(data)) {
+      compatibleList.value = data
+    }
+  } catch (error) {
+    console.error('加载兼容组数据失败:', error)
+  } finally {
+    compatibleLoading.value = false
+  }
 }
 
 const handleDelete = async (row) => {

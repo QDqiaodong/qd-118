@@ -78,6 +78,18 @@ const routes = [
     name: 'WarehouseMap',
     component: () => import('@/views/WarehouseMap.vue'),
     meta: { title: '库房分区货位图' }
+  },
+  {
+    path: '/compatible-model',
+    name: 'CompatibleModel',
+    component: () => import('@/views/CompatibleModel.vue'),
+    meta: { title: '兼容型号库' }
+  },
+  {
+    path: '/duct-offcut',
+    name: 'DuctOffcut',
+    component: () => import('@/views/DuctOffcut.vue'),
+    meta: { title: '线槽裁切余料管理' }
   }
 ]
 
