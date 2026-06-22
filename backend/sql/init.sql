@@ -106,6 +106,50 @@ CREATE TABLE IF NOT EXISTS scrap_record (
     INDEX idx_scrap_time (scrap_time)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='报废归档表';
 
+-- 老化批次归档表
+CREATE TABLE IF NOT EXISTS aging_batch (
+    id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    batch_no VARCHAR(50) NOT NULL COMMENT '批次号',
+    category_id BIGINT COMMENT '配件类别ID',
+    category_name VARCHAR(100) COMMENT '配件类别名称',
+    warehouse_zone VARCHAR(50) COMMENT '库区',
+    inbound_start DATETIME COMMENT '入库时间范围-起始',
+    inbound_end DATETIME COMMENT '入库时间范围-截止',
+    total_quantity INT NOT NULL DEFAULT 0 COMMENT '批次总数量',
+    item_count INT NOT NULL DEFAULT 0 COMMENT '批次配件项数',
+    reason VARCHAR(500) COMMENT '报废原因',
+    operator VARCHAR(50) COMMENT '归档人',
+    archive_time DATETIME NOT NULL COMMENT '归档时间',
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    remark VARCHAR(500) COMMENT '备注',
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_batch_no (batch_no),
+    INDEX idx_category_id (category_id),
+    INDEX idx_warehouse_zone (warehouse_zone),
+    INDEX idx_archive_time (archive_time)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='老化批次归档表';
+
+-- 老化批次归档明细表
+CREATE TABLE IF NOT EXISTS aging_batch_item (
+    id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    batch_id BIGINT NOT NULL COMMENT '批次ID',
+    accessory_id BIGINT NOT NULL COMMENT '配件ID',
+    accessory_name VARCHAR(100) COMMENT '配件名称',
+    accessory_model VARCHAR(100) COMMENT '配件型号',
+    unit VARCHAR(20) COMMENT '单位',
+    warehouse_zone VARCHAR(50) COMMENT '库区',
+    category_id BIGINT COMMENT '配件类别ID',
+    category_name VARCHAR(100) COMMENT '配件类别名称',
+    stock_quantity INT NOT NULL COMMENT '归档时库存数量',
+    scrap_quantity INT NOT NULL COMMENT '报废数量',
+    inbound_time DATETIME COMMENT '入库时间',
+    reason VARCHAR(500) COMMENT '报废原因',
+    remark VARCHAR(500) COMMENT '备注',
+    PRIMARY KEY (id),
+    INDEX idx_batch_id (batch_id),
+    INDEX idx_accessory_id (accessory_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='老化批次归档明细表';
+
 -- 初始化分类数据
 INSERT IGNORE INTO accessory_category (id, name, code, parent_id, sort, remark) VALUES
 (1, '接线端子', 'TERMINAL', 0, 1, '各类接线端子产品'),

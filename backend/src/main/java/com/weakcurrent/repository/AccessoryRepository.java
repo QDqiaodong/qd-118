@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
@@ -47,4 +48,15 @@ public interface AccessoryRepository extends JpaRepository<Accessory, Long> {
     int updateCategoryInfoByCategoryIds(@Param("categoryIds") Collection<Long> categoryIds,
                                         @Param("categoryName") String categoryName,
                                         @Param("categoryPath") String categoryPath);
+
+    @Query("SELECT a FROM Accessory a WHERE a.stockQuantity > 0 " +
+           "AND (:categoryIds IS NULL OR a.categoryId IN :categoryIds) " +
+           "AND (:warehouseZone IS NULL OR :warehouseZone = '' OR a.warehouseZone = :warehouseZone) " +
+           "AND (:inboundStart IS NULL OR a.createTime >= :inboundStart) " +
+           "AND (:inboundEnd IS NULL OR a.createTime <= :inboundEnd) " +
+           "ORDER BY a.categoryId, a.warehouseZone, a.createTime")
+    List<Accessory> findAgingCandidates(@Param("categoryIds") Collection<Long> categoryIds,
+                                        @Param("warehouseZone") String warehouseZone,
+                                        @Param("inboundStart") LocalDateTime inboundStart,
+                                        @Param("inboundEnd") LocalDateTime inboundEnd);
 }

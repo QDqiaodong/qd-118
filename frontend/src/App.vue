@@ -55,6 +55,10 @@
           <el-icon><Delete /></el-icon>
           <template #title>报废归档</template>
         </el-menu-item>
+        <el-menu-item index="/aging-batch">
+          <el-icon><Box /></el-icon>
+          <template #title>老化批次归档</template>
+        </el-menu-item>
         <el-menu-item index="/warehouse-map">
           <el-icon><Grid /></el-icon>
           <template #title>货位图</template>

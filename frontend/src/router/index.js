@@ -62,6 +62,12 @@ const routes = [
     meta: { title: '老化配件报废归档' }
   },
   {
+    path: '/aging-batch',
+    name: 'AgingBatch',
+    component: () => import('@/views/AgingBatch.vue'),
+    meta: { title: '老化批次归档' }
+  },
+  {
     path: '/warehouse-map',
     name: 'WarehouseMap',
     component: () => import('@/views/WarehouseMap.vue'),
