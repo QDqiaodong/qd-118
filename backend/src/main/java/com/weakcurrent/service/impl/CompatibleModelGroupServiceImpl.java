@@ -1,9 +1,12 @@
 package com.weakcurrent.service.impl;
 
 import com.weakcurrent.common.BusinessException;
+import com.weakcurrent.common.CompatibleModelNormalizer;
 import com.weakcurrent.common.ResultCode;
 import com.weakcurrent.dto.CompatibleModelGroupCreateDTO;
 import com.weakcurrent.dto.CompatibleModelGroupUpdateDTO;
+import com.weakcurrent.dto.CompatibleModelGroupValidateDTO;
+import com.weakcurrent.dto.CompatibleModelGroupValidateResultDTO;
 import com.weakcurrent.entity.CompatibleModelGroup;
 import com.weakcurrent.repository.CompatibleModelGroupRepository;
 import com.weakcurrent.service.CompatibleModelGroupService;
@@ -21,13 +24,37 @@ public class CompatibleModelGroupServiceImpl implements CompatibleModelGroupServ
     private final CompatibleModelGroupRepository compatibleModelGroupRepository;
 
     @Override
+    public CompatibleModelGroupValidateResultDTO validate(CompatibleModelGroupValidateDTO dto) {
+        String normalizedGroupName = CompatibleModelNormalizer.normalizeGroupName(dto.getGroupName());
+        String normalizedBrand = CompatibleModelNormalizer.normalizeBrand(dto.getBrand());
+        String normalizedModel = CompatibleModelNormalizer.normalizeModel(dto.getModel());
+
+        if (normalizedGroupName == null || normalizedGroupName.isEmpty()) {
+            return CompatibleModelGroupValidateResultDTO.invalid("兼容组名称不能为空");
+        }
+        if (normalizedModel == null || normalizedModel.isEmpty()) {
+            return CompatibleModelGroupValidateResultDTO.invalid("型号不能为空");
+        }
+
+        if (isDuplicate(normalizedGroupName, normalizedBrand, normalizedModel, dto.getId())) {
+            return CompatibleModelGroupValidateResultDTO.duplicate(
+                    ResultCode.COMPATIBLE_MODEL_DUPLICATE.getMessage()
+            );
+        }
+
+        return CompatibleModelGroupValidateResultDTO.success(
+                normalizedGroupName, normalizedBrand, normalizedModel
+        );
+    }
+
+    @Override
     @Transactional
     public CompatibleModelGroup create(CompatibleModelGroupCreateDTO dto) {
-        String groupName = normalize(dto.getGroupName());
-        String brand = normalizeNullable(dto.getBrand());
-        String model = normalize(dto.getModel());
-        String spec = normalizeNullable(dto.getSpec());
-        String remark = normalizeNullable(dto.getRemark());
+        String groupName = CompatibleModelNormalizer.normalizeGroupName(dto.getGroupName());
+        String brand = CompatibleModelNormalizer.normalizeBrand(dto.getBrand());
+        String model = CompatibleModelNormalizer.normalizeModel(dto.getModel());
+        String spec = CompatibleModelNormalizer.normalizeSpec(dto.getSpec());
+        String remark = CompatibleModelNormalizer.normalizeRemark(dto.getRemark());
 
         checkDuplicate(groupName, brand, model, null);
 
@@ -47,11 +74,11 @@ public class CompatibleModelGroupServiceImpl implements CompatibleModelGroupServ
         CompatibleModelGroup entity = compatibleModelGroupRepository.findById(dto.getId())
                 .orElseThrow(() -> new BusinessException(ResultCode.DATA_NOT_FOUND));
 
-        String groupName = normalize(dto.getGroupName());
-        String brand = normalizeNullable(dto.getBrand());
-        String model = normalize(dto.getModel());
-        String spec = normalizeNullable(dto.getSpec());
-        String remark = normalizeNullable(dto.getRemark());
+        String groupName = CompatibleModelNormalizer.normalizeGroupName(dto.getGroupName());
+        String brand = CompatibleModelNormalizer.normalizeBrand(dto.getBrand());
+        String model = CompatibleModelNormalizer.normalizeModel(dto.getModel());
+        String spec = CompatibleModelNormalizer.normalizeSpec(dto.getSpec());
+        String remark = CompatibleModelNormalizer.normalizeRemark(dto.getRemark());
 
         checkDuplicate(groupName, brand, model, dto.getId());
 
@@ -65,35 +92,20 @@ public class CompatibleModelGroupServiceImpl implements CompatibleModelGroupServ
     }
 
     private void checkDuplicate(String groupName, String brand, String model, Long excludeId) {
-        if (groupName == null || model == null) {
-            return;
-        }
-        String normGroup = groupName.trim();
-        String normBrand = (brand == null ? "" : brand).trim().toLowerCase();
-        String normModel = model.trim().toLowerCase();
-
-        List<CompatibleModelGroup> sameGroup = compatibleModelGroupRepository.findByGroupName(normGroup);
-        boolean duplicate = sameGroup.stream()
-                .filter(item -> excludeId == null || !item.getId().equals(excludeId))
-                .anyMatch(item -> {
-                    String itemBrand = (item.getBrand() == null ? "" : item.getBrand()).trim().toLowerCase();
-                    String itemModel = (item.getModel() == null ? "" : item.getModel()).trim().toLowerCase();
-                    return itemBrand.equals(normBrand) && itemModel.equals(normModel);
-                });
-        if (duplicate) {
+        if (isDuplicate(groupName, brand, model, excludeId)) {
             throw new BusinessException(ResultCode.COMPATIBLE_MODEL_DUPLICATE);
         }
     }
 
-    private String normalize(String value) {
-        if (value == null) return null;
-        return value.trim();
-    }
-
-    private String normalizeNullable(String value) {
-        if (value == null) return null;
-        String trimmed = value.trim();
-        return trimmed.isEmpty() ? null : trimmed;
+    private boolean isDuplicate(String groupName, String brand, String model, Long excludeId) {
+        if (groupName == null || model == null) {
+            return false;
+        }
+        List<CompatibleModelGroup> sameGroup = compatibleModelGroupRepository.findByGroupName(groupName);
+        return sameGroup.stream()
+                .filter(item -> excludeId == null || !item.getId().equals(excludeId))
+                .anyMatch(item -> CompatibleModelNormalizer.brandsEqual(item.getBrand(), brand)
+                        && CompatibleModelNormalizer.modelsEqual(item.getModel(), model));
     }
 
     @Override

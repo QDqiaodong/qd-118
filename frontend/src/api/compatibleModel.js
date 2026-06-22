@@ -43,6 +43,14 @@ export function getGroupNames() {
   })
 }
 
+export function validateCompatibleModelGroup(data) {
+  return request({
+    url: '/compatible-model-groups/validate',
+    method: 'post',
+    data
+  })
+}
+
 export function createCompatibleModelGroup(data) {
   return request({
     url: '/compatible-model-groups',

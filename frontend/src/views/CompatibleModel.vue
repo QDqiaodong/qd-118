@@ -147,7 +147,8 @@ import {
   updateCompatibleModelGroup,
   deleteCompatibleModelGroup,
   getGroupNames,
-  getCompatibleModelGroupsByGroup
+  getCompatibleModelGroupsByGroup,
+  validateCompatibleModelGroup
 } from '@/api/compatibleModel'
 import { getAccessoryList } from '@/api/accessory'
 
@@ -155,6 +156,7 @@ const loading = ref(false)
 const dialogVisible = ref(false)
 const dialogTitle = ref('新增兼容型号')
 const submitting = ref(false)
+const validating = ref(false)
 const formRef = ref(null)
 const isEdit = ref(false)
 
@@ -181,12 +183,53 @@ const formData = reactive({
   remark: ''
 })
 
+const validateDuplicate = async (rule, value, callback) => {
+  if (!formData.groupName || !formData.model) {
+    callback()
+    return
+  }
+  validating.value = true
+  try {
+    const result = await validateCompatibleModelGroup({
+      id: isEdit.value ? formData.id : null,
+      groupName: formData.groupName,
+      brand: formData.brand,
+      model: formData.model
+    })
+    if (result && !result.valid) {
+      callback(new Error(result.message || '校验失败'))
+    } else {
+      callback()
+    }
+  } catch (error) {
+    console.error('校验失败:', error)
+    callback(new Error('校验失败，请稍后重试'))
+  } finally {
+    validating.value = false
+  }
+}
+
+let debounceTimer = null
+const debouncedValidate = (rule, value, callback) => {
+  if (debounceTimer) {
+    clearTimeout(debounceTimer)
+  }
+  debounceTimer = setTimeout(() => {
+    validateDuplicate(rule, value, callback)
+  }, 300)
+}
+
 const formRules = {
   groupName: [
-    { required: true, message: '请输入兼容组名称', trigger: 'blur' }
+    { required: true, message: '请输入兼容组名称', trigger: 'blur' },
+    { validator: debouncedValidate, trigger: 'blur' }
   ],
   model: [
-    { required: true, message: '请输入型号', trigger: 'blur' }
+    { required: true, message: '请输入型号', trigger: 'blur' },
+    { validator: debouncedValidate, trigger: 'blur' }
+  ],
+  brand: [
+    { validator: debouncedValidate, trigger: 'blur' }
   ]
 }
 
@@ -330,33 +373,15 @@ const handleSubmit = async () => {
   await formRef.value.validate(async (valid) => {
     if (!valid) return
 
-    const trimmedBrand = (formData.brand || '').trim()
-    const trimmedModel = (formData.model || '').trim()
-    const trimmedGroupName = (formData.groupName || '').trim()
-
-    const duplicate = dataList.value.find((item) => {
-      if (isEdit.value && item.id === formData.id) return false
-      if (!item.groupName || item.groupName.trim() !== trimmedGroupName) return false
-      const itemBrand = (item.brand || '').trim().toLowerCase()
-      const itemModel = (item.model || '').trim().toLowerCase()
-      const inputBrand = trimmedBrand.toLowerCase()
-      const inputModel = trimmedModel.toLowerCase()
-      return itemBrand === inputBrand && itemModel === inputModel
-    })
-    if (duplicate) {
-      ElMessage.error('同兼容组内已存在相同品牌和型号的记录，请检查后重新输入')
-      return
-    }
-
     submitting.value = true
     try {
       const payload = {
-        groupName: trimmedGroupName,
-        brand: trimmedBrand,
-        model: trimmedModel,
-        spec: (formData.spec || '').trim(),
+        groupName: formData.groupName,
+        brand: formData.brand,
+        model: formData.model,
+        spec: formData.spec,
         accessoryId: formData.accessoryId,
-        remark: (formData.remark || '').trim()
+        remark: formData.remark
       }
       if (isEdit.value) {
         payload.id = formData.id

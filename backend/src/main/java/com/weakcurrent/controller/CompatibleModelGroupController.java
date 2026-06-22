@@ -3,6 +3,8 @@ package com.weakcurrent.controller;
 import com.weakcurrent.common.Result;
 import com.weakcurrent.dto.CompatibleModelGroupCreateDTO;
 import com.weakcurrent.dto.CompatibleModelGroupUpdateDTO;
+import com.weakcurrent.dto.CompatibleModelGroupValidateDTO;
+import com.weakcurrent.dto.CompatibleModelGroupValidateResultDTO;
 import com.weakcurrent.entity.CompatibleModelGroup;
 import com.weakcurrent.service.CompatibleModelGroupService;
 import jakarta.validation.Valid;
@@ -17,6 +19,11 @@ import java.util.List;
 public class CompatibleModelGroupController {
 
     private final CompatibleModelGroupService compatibleModelGroupService;
+
+    @PostMapping("/validate")
+    public Result<CompatibleModelGroupValidateResultDTO> validate(@Valid @RequestBody CompatibleModelGroupValidateDTO dto) {
+        return Result.success(compatibleModelGroupService.validate(dto));
+    }
 
     @PostMapping
     public Result<CompatibleModelGroup> create(@Valid @RequestBody CompatibleModelGroupCreateDTO dto) {

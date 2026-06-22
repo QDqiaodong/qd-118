@@ -2,11 +2,15 @@ package com.weakcurrent.service;
 
 import com.weakcurrent.dto.CompatibleModelGroupCreateDTO;
 import com.weakcurrent.dto.CompatibleModelGroupUpdateDTO;
+import com.weakcurrent.dto.CompatibleModelGroupValidateDTO;
+import com.weakcurrent.dto.CompatibleModelGroupValidateResultDTO;
 import com.weakcurrent.entity.CompatibleModelGroup;
 
 import java.util.List;
 
 public interface CompatibleModelGroupService {
+
+    CompatibleModelGroupValidateResultDTO validate(CompatibleModelGroupValidateDTO dto);
 
     CompatibleModelGroup create(CompatibleModelGroupCreateDTO dto);
 
