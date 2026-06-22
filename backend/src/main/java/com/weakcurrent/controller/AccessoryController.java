@@ -2,6 +2,7 @@ package com.weakcurrent.controller;
 
 import com.weakcurrent.common.Result;
 import com.weakcurrent.dto.AccessoryCreateDTO;
+import com.weakcurrent.dto.AccessorySpecTemplateDTO;
 import com.weakcurrent.dto.AccessoryUpdateDTO;
 import com.weakcurrent.entity.Accessory;
 import com.weakcurrent.service.AccessoryService;
@@ -64,5 +65,15 @@ public class AccessoryController {
     public Result<Void> addStock(@PathVariable Long id, @RequestParam Integer quantity) {
         accessoryService.addStock(id, quantity);
         return Result.success();
+    }
+
+    @GetMapping("/spec-template")
+    public Result<List<AccessorySpecTemplateDTO>> getAllSpecTemplates() {
+        return Result.success(accessoryService.getAllSpecTemplates());
+    }
+
+    @GetMapping("/spec-template/{categoryCode}")
+    public Result<AccessorySpecTemplateDTO> getSpecTemplateByCategoryCode(@PathVariable String categoryCode) {
+        return Result.success(accessoryService.getSpecTemplateByCategoryCode(categoryCode));
     }
 }

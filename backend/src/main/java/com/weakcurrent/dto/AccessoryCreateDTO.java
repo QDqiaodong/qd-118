@@ -27,4 +27,14 @@ public class AccessoryCreateDTO {
     private String warehouseZone;
 
     private String unit;
+
+    private String squareNumber;
+
+    private Integer pinCount;
+
+    private String width;
+
+    private String height;
+
+    private String diameter;
 }

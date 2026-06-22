@@ -1,6 +1,7 @@
 package com.weakcurrent.service;
 
 import com.weakcurrent.dto.AccessoryCreateDTO;
+import com.weakcurrent.dto.AccessorySpecTemplateDTO;
 import com.weakcurrent.dto.AccessoryUpdateDTO;
 import com.weakcurrent.entity.Accessory;
 
@@ -31,4 +32,8 @@ public interface AccessoryService {
     void syncCategoryPath(Long categoryId, String categoryName, String categoryPath);
 
     void syncCategoryPathForDescendants(List<Long> categoryIds, String categoryName, String categoryPath);
+
+    AccessorySpecTemplateDTO getSpecTemplateByCategoryCode(String categoryCode);
+
+    List<AccessorySpecTemplateDTO> getAllSpecTemplates();
 }

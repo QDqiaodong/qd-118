@@ -63,7 +63,12 @@ export function addAccessory(data) {
       categoryName: data.categoryName,
       stockQuantity: data.quantity ?? data.stockQuantity,
       warehouseZone: data.zone ?? data.warehouseZone,
-      unit: data.unit
+      unit: data.unit,
+      squareNumber: data.squareNumber,
+      pinCount: data.pinCount,
+      width: data.width,
+      height: data.height,
+      diameter: data.diameter
     }
   }).then((res) => res ? mapAccessoryFields(res) : res)
 }
@@ -81,7 +86,12 @@ export function updateAccessory(data) {
       categoryName: data.categoryName,
       stockQuantity: data.quantity ?? data.stockQuantity,
       warehouseZone: data.zone ?? data.warehouseZone,
-      unit: data.unit
+      unit: data.unit,
+      squareNumber: data.squareNumber,
+      pinCount: data.pinCount,
+      width: data.width,
+      height: data.height,
+      diameter: data.diameter
     }
   }).then((res) => res ? mapAccessoryFields(res) : res)
 }
@@ -90,5 +100,19 @@ export function deleteAccessory(id) {
   return request({
     url: `/accessories/${id}`,
     method: 'delete'
+  })
+}
+
+export function getAllSpecTemplates() {
+  return request({
+    url: '/accessories/spec-template',
+    method: 'get'
+  })
+}
+
+export function getSpecTemplateByCategoryCode(categoryCode) {
+  return request({
+    url: `/accessories/spec-template/${categoryCode}`,
+    method: 'get'
   })
 }

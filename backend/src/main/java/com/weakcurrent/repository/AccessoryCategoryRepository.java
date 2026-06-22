@@ -14,4 +14,6 @@ public interface AccessoryCategoryRepository extends JpaRepository<AccessoryCate
     List<AccessoryCategory> findByParentId(Long parentId);
 
     List<AccessoryCategory> findAllByOrderBySortAsc();
+
+    AccessoryCategory findByCode(String code);
 }

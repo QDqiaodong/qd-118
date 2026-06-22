@@ -5,6 +5,7 @@ import com.weakcurrent.common.ResultCode;
 import com.weakcurrent.dto.AccessoryCreateDTO;
 import com.weakcurrent.dto.AccessoryDuplicateDTO;
 import com.weakcurrent.dto.AccessoryRelatedRecordsDTO;
+import com.weakcurrent.dto.AccessorySpecTemplateDTO;
 import com.weakcurrent.dto.AccessoryUpdateDTO;
 import com.weakcurrent.entity.Accessory;
 import com.weakcurrent.entity.AccessoryCategory;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -55,6 +57,11 @@ public class AccessoryServiceImpl implements AccessoryService {
         accessory.setStockQuantity(dto.getStockQuantity());
         accessory.setWarehouseZone(dto.getWarehouseZone());
         accessory.setUnit(dto.getUnit());
+        accessory.setSquareNumber(dto.getSquareNumber());
+        accessory.setPinCount(dto.getPinCount());
+        accessory.setWidth(dto.getWidth());
+        accessory.setHeight(dto.getHeight());
+        accessory.setDiameter(dto.getDiameter());
 
         return accessoryRepository.save(accessory);
     }
@@ -83,6 +90,11 @@ public class AccessoryServiceImpl implements AccessoryService {
         accessory.setStockQuantity(dto.getStockQuantity());
         accessory.setWarehouseZone(dto.getWarehouseZone());
         accessory.setUnit(dto.getUnit());
+        accessory.setSquareNumber(dto.getSquareNumber());
+        accessory.setPinCount(dto.getPinCount());
+        accessory.setWidth(dto.getWidth());
+        accessory.setHeight(dto.getHeight());
+        accessory.setDiameter(dto.getDiameter());
 
         return accessoryRepository.save(accessory);
     }
@@ -209,5 +221,52 @@ public class AccessoryServiceImpl implements AccessoryService {
             return;
         }
         accessoryRepository.updateCategoryInfoByCategoryIds(categoryIds, categoryName, categoryPath);
+    }
+
+    @Override
+    public AccessorySpecTemplateDTO getSpecTemplateByCategoryCode(String categoryCode) {
+        AccessoryCategory category = accessoryCategoryRepository.findByCode(categoryCode);
+        if (category == null) {
+            throw new BusinessException(ResultCode.DATA_NOT_FOUND);
+        }
+        return buildSpecTemplate(category);
+    }
+
+    @Override
+    public List<AccessorySpecTemplateDTO> getAllSpecTemplates() {
+        List<AccessoryCategory> rootCategories = accessoryCategoryRepository.findByParentIdOrderBySortAsc(0L);
+        return rootCategories.stream()
+                .map(this::buildSpecTemplate)
+                .collect(Collectors.toList());
+    }
+
+    private AccessorySpecTemplateDTO buildSpecTemplate(AccessoryCategory category) {
+        List<AccessorySpecTemplateDTO.SpecField> specFields;
+        String code = category.getCode();
+
+        if (code != null && code.startsWith("TERMINAL")) {
+            specFields = Arrays.asList(
+                    new AccessorySpecTemplateDTO.SpecField("squareNumber", "平方数", "string", "如：2.5mm²"),
+                    new AccessorySpecTemplateDTO.SpecField("pinCount", "针脚数", "integer", "如：5")
+            );
+        } else if (code != null && code.startsWith("DUCT")) {
+            specFields = Arrays.asList(
+                    new AccessorySpecTemplateDTO.SpecField("width", "宽度", "string", "如：25mm"),
+                    new AccessorySpecTemplateDTO.SpecField("height", "高度", "string", "如：15mm")
+            );
+        } else if (code != null && code.startsWith("CLIP")) {
+            specFields = Arrays.asList(
+                    new AccessorySpecTemplateDTO.SpecField("diameter", "卡扣直径", "string", "如：Φ8mm")
+            );
+        } else {
+            specFields = Collections.emptyList();
+        }
+
+        return new AccessorySpecTemplateDTO(
+                category.getId(),
+                category.getName(),
+                category.getCode(),
+                specFields
+        );
     }
 }

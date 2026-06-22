@@ -43,6 +43,21 @@ public class Accessory {
     @Column(name = "unit", length = 20)
     private String unit;
 
+    @Column(name = "square_number", length = 20)
+    private String squareNumber;
+
+    @Column(name = "pin_count")
+    private Integer pinCount;
+
+    @Column(name = "width", length = 20)
+    private String width;
+
+    @Column(name = "height", length = 20)
+    private String height;
+
+    @Column(name = "diameter", length = 20)
+    private String diameter;
+
     @CreationTimestamp
     @Column(name = "create_time", updatable = false)
     private LocalDateTime createTime;
