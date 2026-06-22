@@ -44,6 +44,13 @@ export function getAccessoryList(params) {
   }).then((data) => mapAccessoryList(data))
 }
 
+export function getAccessoryListWithLatestCheck() {
+  return request({
+    url: '/accessories/with-latest-check',
+    method: 'get'
+  })
+}
+
 export function getAccessoryById(id) {
   return request({
     url: `/accessories/${id}`,

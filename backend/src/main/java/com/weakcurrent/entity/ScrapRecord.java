@@ -44,6 +44,9 @@ public class ScrapRecord {
     @Column(name = "remark", length = 500)
     private String remark;
 
+    @Column(name = "aging_batch_id")
+    private Long agingBatchId;
+
     @PrePersist
     protected void onCreate() {
         if (createTime == null) {

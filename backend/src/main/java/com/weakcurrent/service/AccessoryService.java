@@ -3,6 +3,7 @@ package com.weakcurrent.service;
 import com.weakcurrent.dto.AccessoryCreateDTO;
 import com.weakcurrent.dto.AccessorySpecTemplateDTO;
 import com.weakcurrent.dto.AccessoryUpdateDTO;
+import com.weakcurrent.dto.AccessoryWithLatestCheckDTO;
 import com.weakcurrent.entity.Accessory;
 
 import java.util.List;
@@ -36,4 +37,6 @@ public interface AccessoryService {
     AccessorySpecTemplateDTO getSpecTemplateByCategoryCode(String categoryCode);
 
     List<AccessorySpecTemplateDTO> getAllSpecTemplates();
+
+    List<AccessoryWithLatestCheckDTO> listWithLatestCheck();
 }

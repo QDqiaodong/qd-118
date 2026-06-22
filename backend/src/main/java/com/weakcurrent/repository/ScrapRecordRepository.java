@@ -2,6 +2,7 @@ package com.weakcurrent.repository;
 
 import com.weakcurrent.entity.ScrapRecord;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -17,6 +18,12 @@ public interface ScrapRecordRepository extends JpaRepository<ScrapRecord, Long> 
     List<ScrapRecord> findByOperator(String operator);
 
     long countByAccessoryId(Long accessoryId);
+
+    List<ScrapRecord> findByAgingBatchId(Long agingBatchId);
+
+    @Modifying
+    @Query("DELETE FROM ScrapRecord s WHERE s.agingBatchId = :agingBatchId")
+    void deleteByAgingBatchId(@Param("agingBatchId") Long agingBatchId);
 
     @Query("SELECT COALESCE(SUM(s.quantity), 0) FROM ScrapRecord s WHERE s.scrapTime BETWEEN :start AND :end")
     Integer sumQuantityByScrapTimeBetween(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);

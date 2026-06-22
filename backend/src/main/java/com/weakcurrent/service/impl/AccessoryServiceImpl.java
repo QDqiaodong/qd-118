@@ -7,8 +7,10 @@ import com.weakcurrent.dto.AccessoryDuplicateDTO;
 import com.weakcurrent.dto.AccessoryRelatedRecordsDTO;
 import com.weakcurrent.dto.AccessorySpecTemplateDTO;
 import com.weakcurrent.dto.AccessoryUpdateDTO;
+import com.weakcurrent.dto.AccessoryWithLatestCheckDTO;
 import com.weakcurrent.entity.Accessory;
 import com.weakcurrent.entity.AccessoryCategory;
+import com.weakcurrent.entity.InventoryCheck;
 import com.weakcurrent.repository.AccessoryCategoryRepository;
 import com.weakcurrent.repository.AccessoryRepository;
 import com.weakcurrent.repository.InventoryCheckRepository;
@@ -23,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -268,5 +271,46 @@ public class AccessoryServiceImpl implements AccessoryService {
                 category.getCode(),
                 specFields
         );
+    }
+
+    @Override
+    public List<AccessoryWithLatestCheckDTO> listWithLatestCheck() {
+        List<Accessory> accessories = accessoryRepository.findAll();
+        return accessories.stream().map(accessory -> {
+            AccessoryWithLatestCheckDTO dto = new AccessoryWithLatestCheckDTO();
+            dto.setId(accessory.getId());
+            dto.setName(accessory.getName());
+            dto.setModel(accessory.getModel());
+            dto.setSpec(accessory.getSpec());
+            dto.setCategoryId(accessory.getCategoryId());
+            dto.setCategoryName(accessory.getCategoryName());
+            dto.setCategoryPath(accessory.getCategoryPath());
+            dto.setStockQuantity(accessory.getStockQuantity());
+            dto.setWarehouseZone(accessory.getWarehouseZone());
+            dto.setUnit(accessory.getUnit());
+            dto.setSquareNumber(accessory.getSquareNumber());
+            dto.setPinCount(accessory.getPinCount());
+            dto.setWidth(accessory.getWidth());
+            dto.setHeight(accessory.getHeight());
+            dto.setDiameter(accessory.getDiameter());
+            dto.setCreateTime(accessory.getCreateTime());
+            dto.setUpdateTime(accessory.getUpdateTime());
+
+            Optional<InventoryCheck> latestCheck = inventoryCheckRepository
+                    .findTopByAccessoryIdOrderByCheckTimeDesc(accessory.getId());
+            if (latestCheck.isPresent()) {
+                InventoryCheck check = latestCheck.get();
+                dto.setLatestCheckId(check.getId());
+                dto.setLatestPhysicalQuantity(check.getPhysicalQuantity());
+                dto.setLatestSystemQuantity(check.getSystemQuantity());
+                dto.setLatestDifference(check.getDifference());
+                dto.setLatestCheckStatus(check.getStatus());
+                dto.setLatestCheckPerson(check.getCheckPerson());
+                dto.setLatestCheckTime(check.getCheckTime());
+                dto.setLatestCheckRemark(check.getRemark());
+            }
+
+            return dto;
+        }).collect(Collectors.toList());
     }
 }

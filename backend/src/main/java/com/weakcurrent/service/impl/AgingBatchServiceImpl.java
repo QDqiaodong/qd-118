@@ -164,6 +164,7 @@ public class AgingBatchServiceImpl implements AgingBatchService {
             scrap.setReason(item.getReason());
             scrap.setOperator(dto.getOperator());
             scrap.setScrapTime(now);
+            scrap.setAgingBatchId(savedBatch.getId());
             StringBuilder remarkBuilder = new StringBuilder();
             remarkBuilder.append("[老化批次归档] 批次号: ").append(savedBatch.getBatchNo());
             if (dto.getRemark() != null && !dto.getRemark().isEmpty()) {
@@ -210,6 +211,8 @@ public class AgingBatchServiceImpl implements AgingBatchService {
         for (AgingBatchItem item : items) {
             accessoryService.addStock(item.getAccessoryId(), item.getScrapQuantity());
         }
+
+        scrapRecordRepository.deleteByAgingBatchId(id);
 
         agingBatchItemRepository.deleteByBatchId(id);
         agingBatchRepository.deleteById(id);

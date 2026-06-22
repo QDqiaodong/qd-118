@@ -4,6 +4,7 @@ import com.weakcurrent.common.Result;
 import com.weakcurrent.dto.AccessoryCreateDTO;
 import com.weakcurrent.dto.AccessorySpecTemplateDTO;
 import com.weakcurrent.dto.AccessoryUpdateDTO;
+import com.weakcurrent.dto.AccessoryWithLatestCheckDTO;
 import com.weakcurrent.entity.Accessory;
 import com.weakcurrent.service.AccessoryService;
 import jakarta.validation.Valid;
@@ -43,6 +44,11 @@ public class AccessoryController {
     @GetMapping
     public Result<List<Accessory>> list() {
         return Result.success(accessoryService.list());
+    }
+
+    @GetMapping("/with-latest-check")
+    public Result<List<AccessoryWithLatestCheckDTO>> listWithLatestCheck() {
+        return Result.success(accessoryService.listWithLatestCheck());
     }
 
     @GetMapping("/category/{categoryId}")

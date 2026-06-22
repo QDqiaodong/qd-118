@@ -145,7 +145,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search } from '@element-plus/icons-vue'
-import { getAccessoryList } from '@/api/accessory'
+import { getAccessoryListWithLatestCheck } from '@/api/accessory'
 import { createBatchInventory } from '@/api/inventory'
 
 const loading = ref(false)
@@ -194,6 +194,7 @@ const recalcItemStatus = (row) => {
 }
 
 const onActualChange = (row) => {
+  row.isModified = true
   recalcItemStatus(row)
 }
 
@@ -272,15 +273,33 @@ const mapAccessoryFields = (item) => ({
 const loadData = async () => {
   loading.value = true
   try {
-    const data = await getAccessoryList({ pageNum: 1, pageSize: 9999 })
+    const data = await getAccessoryListWithLatestCheck()
     if (data) {
       const list = data.records || data.list || data || []
-      dataList.value = list.map((item) => ({
-        ...mapAccessoryFields(item),
-        actualQuantity: null,
-        diff: null,
-        status: 'UNFILLED'
-      }))
+      dataList.value = list.map((item) => {
+        const mapped = mapAccessoryFields(item)
+        if (item.latestCheckId && item.latestCheckStatus) {
+          return {
+            ...mapped,
+            actualQuantity: item.latestPhysicalQuantity,
+            diff: item.latestDifference,
+            status: item.latestCheckStatus,
+            checkPerson: item.latestCheckPerson,
+            checkTime: item.latestCheckTime,
+            isFromBackend: true,
+            isModified: false
+          }
+        } else {
+          return {
+            ...mapped,
+            actualQuantity: null,
+            diff: null,
+            status: 'UNFILLED',
+            isFromBackend: false,
+            isModified: false
+          }
+        }
+      })
     }
   } catch (error) {
     console.error('加载配件列表失败:', error)
@@ -295,6 +314,7 @@ const handleFillAll = () => {
     row.actualQuantity = row.quantity
     row.diff = 0
     row.status = 'MATCH'
+    row.isModified = true
   })
   ElMessage.success('已按系统库存填充全部实盘数量')
 }
@@ -304,6 +324,7 @@ const handleClearAll = () => {
     row.actualQuantity = null
     row.diff = null
     row.status = 'UNFILLED'
+    row.isModified = true
   })
   ElMessage.success('已清空实盘数量')
 }
