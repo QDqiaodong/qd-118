@@ -43,6 +43,9 @@ public class StockOutServiceImpl implements StockOutService {
         stockOut.setWorkshop(dto.getWorkshop());
         stockOut.setUsageId(dto.getUsageId());
         stockOut.setUsageName(usage.getName());
+        stockOut.setProjectId(dto.getProjectId());
+        stockOut.setProjectNo(dto.getProjectNo());
+        stockOut.setPurpose(dto.getPurpose());
         stockOut.setQuantity(dto.getQuantity());
         stockOut.setOperator(dto.getOperator());
         stockOut.setOutTime(dto.getOutTime() != null ? dto.getOutTime() : LocalDateTime.now());
@@ -84,6 +87,9 @@ public class StockOutServiceImpl implements StockOutService {
         stockOut.setWorkshop(dto.getWorkshop());
         stockOut.setUsageId(dto.getUsageId());
         stockOut.setUsageName(usage.getName());
+        stockOut.setProjectId(dto.getProjectId());
+        stockOut.setProjectNo(dto.getProjectNo());
+        stockOut.setPurpose(dto.getPurpose());
         stockOut.setQuantity(dto.getQuantity());
         stockOut.setOperator(dto.getOperator());
         stockOut.setOutTime(dto.getOutTime());

@@ -83,6 +83,27 @@
           </el-select>
         </el-form-item>
 
+        <el-form-item label="施工项目" prop="projectId" style="width: 320px">
+          <el-select
+            v-model="outForm.projectId"
+            placeholder="请选择施工项目"
+            filterable
+            style="width: 100%"
+            @change="handleProjectChange"
+          >
+            <el-option
+              v-for="item in projectList"
+              :key="item.id"
+              :value="item.id"
+              :label="`${item.projectNo} - ${item.projectName}`"
+            />
+          </el-select>
+        </el-form-item>
+
+        <el-form-item label="用途说明" style="width: 360px">
+          <el-input v-model="outForm.purpose" placeholder="请输入用途说明（选填）" maxlength="500" />
+        </el-form-item>
+
         <el-form-item label="领用数量" prop="quantity" style="width: 220px" :error="quantityError">
           <el-input-number
             ref="quantityInputRef"
@@ -130,6 +151,14 @@
             <span class="ml-8">领用历史记录</span>
           </div>
           <div style="display: flex; gap: 12px">
+            <el-select v-model="filterProject" placeholder="筛选项目" clearable style="width: 200px">
+              <el-option
+                v-for="item in projectList"
+                :key="item.id"
+                :value="item.projectNo"
+                :label="item.projectNo"
+              />
+            </el-select>
             <el-select v-model="filterWorkshop" placeholder="筛选车间" clearable style="width: 160px">
               <el-option label="第一车间" value="第一车间" />
               <el-option label="第二车间" value="第二车间" />
@@ -162,6 +191,8 @@
         </el-table-column>
         <el-table-column prop="workshop" label="领用车间" width="120" align="center" />
         <el-table-column prop="usageName" label="领用用途" width="140" align="center" show-overflow-tooltip />
+        <el-table-column prop="projectNo" label="施工项目" width="160" align="center" show-overflow-tooltip />
+        <el-table-column prop="purpose" label="用途说明" width="160" show-overflow-tooltip />
         <el-table-column prop="operator" label="领用人" width="100" align="center" />
         <el-table-column label="领用时库存" width="120" align="center">
           <template #default="{ row }">
@@ -198,6 +229,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { getAccessoryList } from '@/api/accessory'
 import { getStockOutPage, createStockOut, deleteStockOut } from '@/api/stockout'
 import { getWorkshopUsageEnabled } from '@/api/workshopUsage'
+import { getConstructionProjectActive } from '@/api/constructionProject'
 
 const historyLoading = ref(false)
 const submitting = ref(false)
@@ -206,9 +238,11 @@ const quantityInputRef = ref(null)
 
 const accessoryList = ref([])
 const usageList = ref([])
+const projectList = ref([])
 const historyList = ref([])
 const filterWorkshop = ref('')
 const filterUsage = ref('')
+const filterProject = ref('')
 const historyPage = ref(1)
 const historyPageSize = ref(10)
 const quantityError = ref('')
@@ -217,6 +251,9 @@ const outForm = reactive({
   accessoryId: null,
   workshop: '',
   usageId: null,
+  projectId: null,
+  projectNo: '',
+  purpose: '',
   quantity: 1,
   operator: ''
 })
@@ -275,6 +312,9 @@ const filteredHistoryList = computed(() => {
   if (filterUsage.value) {
     list = list.filter((h) => h.usageName === filterUsage.value)
   }
+  if (filterProject.value) {
+    list = list.filter((h) => h.projectNo === filterProject.value)
+  }
   return list
 })
 
@@ -284,7 +324,7 @@ const filteredHistory = computed(() => {
   return list.slice(start, start + historyPageSize.value)
 })
 
-watch([filterWorkshop, filterUsage], () => {
+watch([filterWorkshop, filterUsage, filterProject], () => {
   historyPage.value = 1
 })
 
@@ -334,6 +374,9 @@ const resetOutForm = () => {
   outForm.accessoryId = null
   outForm.workshop = ''
   outForm.usageId = null
+  outForm.projectId = null
+  outForm.projectNo = ''
+  outForm.purpose = ''
   outForm.quantity = 1
   outForm.operator = ''
   quantityError.value = ''
@@ -348,6 +391,26 @@ const loadUsageList = async () => {
     }
   } catch (error) {
     console.error('加载领用用途列表失败:', error)
+  }
+}
+
+const loadProjectList = async () => {
+  try {
+    const data = await getConstructionProjectActive()
+    if (data && Array.isArray(data)) {
+      projectList.value = data
+    }
+  } catch (error) {
+    console.error('加载施工项目列表失败:', error)
+  }
+}
+
+const handleProjectChange = (val) => {
+  if (val) {
+    const project = projectList.value.find((p) => p.id === val)
+    outForm.projectNo = project ? project.projectNo : ''
+  } else {
+    outForm.projectNo = ''
   }
 }
 
@@ -406,6 +469,9 @@ const handleOutSubmit = async () => {
         accessoryId: outForm.accessoryId,
         workshop: outForm.workshop,
         usageId: outForm.usageId,
+        projectId: outForm.projectId || null,
+        projectNo: outForm.projectNo || null,
+        purpose: outForm.purpose || null,
         quantity: outForm.quantity,
         operator: outForm.operator
       }
@@ -447,6 +513,7 @@ const handleDeleteRecord = async (row) => {
 onMounted(() => {
   loadAccessoryList()
   loadUsageList()
+  loadProjectList()
   loadHistory()
 })
 </script>

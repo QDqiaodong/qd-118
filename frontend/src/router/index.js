@@ -38,6 +38,12 @@ const routes = [
     meta: { title: '车间领用出库登记' }
   },
   {
+    path: '/project-requisition',
+    name: 'ProjectRequisition',
+    component: () => import('@/views/ProjectRequisition.vue'),
+    meta: { title: '施工项目领用' }
+  },
+  {
     path: '/inventory',
     name: 'Inventory',
     component: () => import('@/views/Inventory.vue'),

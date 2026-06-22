@@ -20,6 +20,12 @@ public class StockOutCreateDTO {
     @NotNull(message = "领用用途不能为空")
     private Long usageId;
 
+    private Long projectId;
+
+    private String projectNo;
+
+    private String purpose;
+
     @NotNull(message = "数量不能为空")
     @Min(value = 1, message = "出库数量必须大于0")
     private Integer quantity;

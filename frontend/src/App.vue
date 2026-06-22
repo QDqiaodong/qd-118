@@ -39,6 +39,10 @@
           <el-icon><Sell /></el-icon>
           <template #title>车间领用出库</template>
         </el-menu-item>
+        <el-menu-item index="/project-requisition">
+          <el-icon><Connection /></el-icon>
+          <template #title>施工项目领用</template>
+        </el-menu-item>
         <el-menu-item index="/inventory">
           <el-icon><Tickets /></el-icon>
           <template #title>库房清点</template>

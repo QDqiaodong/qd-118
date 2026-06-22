@@ -29,6 +29,15 @@ public class StockOut {
     @Column(name = "usage_name", length = 100)
     private String usageName;
 
+    @Column(name = "project_id")
+    private Long projectId;
+
+    @Column(name = "project_no", length = 64)
+    private String projectNo;
+
+    @Column(name = "purpose", length = 500)
+    private String purpose;
+
     @Column(name = "quantity", nullable = false)
     private Integer quantity;
 
